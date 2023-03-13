@@ -18,14 +18,12 @@ class Version < ApplicationRecord
   end
 
   def parse_sbom
-    results = `docker sbom #{self.package.name}:#{self.number} --quiet --format syft-json`
+    results = `syft #{self.package.name}:#{self.number} --quiet --output syft-json`
     json = JSON.parse(results)
     update(sbom: json, last_synced_at: Time.now)
   rescue => e
     json = nil
     update(sbom: json, last_synced_at: Time.now)
-  ensure
-    `docker image rm #{self.package.name}:#{self.number}`
   end
 
   def purls

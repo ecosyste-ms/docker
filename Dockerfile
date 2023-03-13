@@ -13,9 +13,12 @@ RUN apk add --update \
     nodejs \
     postgresql-dev \
     tzdata \
+    curl \
     curl-dev \
     libc6-compat \
  && rm -rf /var/cache/apk/* 
+
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
 # Will invalidate cache as soon as the Gemfile changes
 COPY Gemfile Gemfile.lock $APP_ROOT/
