@@ -12,6 +12,10 @@ class Version < ApplicationRecord
   def to_param
     number
   end
+  
+  def parse_sbom_async
+    ParseSbomWokrker.perform_async(self.id)
+  end
 
   def parse_sbom
     results = `docker sbom #{self.package.name}:#{self.number} --quiet --format syft-json`
