@@ -1,0 +1,23 @@
+<div class="container-sm">
+  <h1>
+    <%= link_to @package.name, @package %> : <%= @version %>
+  </h1>
+
+  <% if @version.purls.any? %>
+    <h2>Dependencies</h2>
+    
+    <% @version.purls.map{|purl| PackageURL.parse(purl) }.group_by{|pkg| pkg.type }.each do |type, pkgs| %>
+      <h3><%= type %></h3>
+      <ul>
+        <% pkgs.each do |pkg| %>
+        <li>
+          <%= link_to [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/'), "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(pkg.type)}/packages/#{[pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/')}", target: :_blank %>
+          <small class='text-muted'>
+            <%= pkg.version %>
+          </small>
+        </li>
+      <% end %>
+    </ul>
+    <% end %>
+  <% end %>
+</div>

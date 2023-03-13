@@ -1,0 +1,13 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">
+      <%= link_to version, [version.package, version] %>
+    </h5>
+    
+    <small class='text-muted'>
+      <% if version.published_at %>
+        <span title='<%= version.published_at %>'>Published: <%= time_ago_in_words version.published_at %> ago</span>
+      <% end %>
+    </small>
+  </div>
+</div>

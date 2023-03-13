@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  last_synced_at: 2023-03-13 14:35:21
+  versions_count: 1
+  latest_release_published_at: 2023-03-13 14:35:21
+  latest_release_number: MyString
+
+two:
+  name: MyString
+  last_synced_at: 2023-03-13 14:35:21
+  versions_count: 1
+  latest_release_published_at: 2023-03-13 14:35:21
+  latest_release_number: MyString

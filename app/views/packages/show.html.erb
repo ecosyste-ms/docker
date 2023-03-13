@@ -1,0 +1,9 @@
+<div class="container-sm">
+  <h1>
+    <%= @package.name %>
+  </h1>
+
+  <h2>Versions<h2>
+  <%= render @versions %>
+  <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
+</div>
