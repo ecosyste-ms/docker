@@ -14,13 +14,16 @@ class Version < ApplicationRecord
   end
   
   def parse_sbom_async
-    ParseSbomWokrker.perform_async(self.id)
+    ParseSbomWorker.perform_async(self.id)
   end
 
   def parse_sbom
+    # TODO SYFT_REGISTRY_AUTH_PASSWORD
+    # TODO SYFT_REGISTRY_AUTH_USERNAME
     results = `syft #{self.package.name}:#{self.number} --quiet --output syft-json`
     json = JSON.parse(results)
     update(sbom: json, last_synced_at: Time.now)
+    package.update(has_sbom: true, last_synced_at: Time.now)
   rescue => e
     json = nil
     update(sbom: json, last_synced_at: Time.now)
@@ -29,7 +32,8 @@ class Version < ApplicationRecord
   def purls
     return [] if sbom.nil?
     sbom["artifacts"].map do |artifact|
+      # TODO syft incorretly lists submodules as different packages: eg @stdlib/assert/contains 
       artifact["purl"]
-    end.sort
+    end.sort.reject(&:blank?).uniq
   end
 end

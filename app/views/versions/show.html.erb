@@ -9,11 +9,12 @@
     <% @version.purls.map{|purl| PackageURL.parse(purl) }.group_by{|pkg| pkg.type }.each do |type, pkgs| %>
       <h3><%= type %></h3>
       <ul>
-        <% pkgs.each do |pkg| %>
+        <% pkgs.group_by{|pkg| [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/') }.each do |name, versions| %>
+        <% pkg = versions.first%>
         <li>
-          <%= link_to [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/'), "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(pkg.type)}/packages/#{[pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/')}", target: :_blank %>
+          <%= link_to name, "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(pkg.type)}/packages/#{[pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/')}", target: :_blank %>
           <small class='text-muted'>
-            <%= pkg.version %>
+            <%= versions.map{|p| p.version }.join(', ') %>
           </small>
         </li>
       <% end %>

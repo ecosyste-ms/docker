@@ -1,6 +1,6 @@
 class PackagesController < ApplicationController
   def index
-    @scope = Package.all
+    @scope = Package.where(has_sbom: true).includes(:versions).order('packages.last_synced_at DESC')
     @pagy, @packages = pagy(@scope)
   end
 

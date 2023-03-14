@@ -11,7 +11,11 @@
 
     <small class='text-muted'>
       <% if package.latest_release_published_at %>
-        <%= '-' if package.versions_count > 0 %> <span title="<%= package.latest_release_published_at %>">Latest release: <%= time_ago_in_words package.latest_release_published_at %> ago</span>
+        <span title="<%= package.latest_release_published_at %>">Latest release: <%= time_ago_in_words package.latest_release_published_at %> ago</span>
+      <% end %>
+      
+      <% if package.latest_release && package.latest_release.purls.any? %>
+        - <%= package.latest_release.purls.length %> dependencies
       <% end %>
     </small>
   </div>

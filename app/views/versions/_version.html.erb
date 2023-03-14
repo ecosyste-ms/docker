@@ -8,6 +8,9 @@
       <% if version.published_at %>
         <span title='<%= version.published_at %>'>Published: <%= time_ago_in_words version.published_at %> ago</span>
       <% end %>
+      <% if version.last_synced_at %>
+        <span title='<%= version.last_synced_at %>'>Last synced: <%= time_ago_in_words version.last_synced_at %> ago</span>
+      <% end %>
     </small>
   </div>
 </div>
