@@ -23,7 +23,7 @@ module ApplicationHelper
       'clojars.org'
     when 'alpine'
       'alpine-v3.13'
-    when 'go'
+    when 'golang'
       'proxy.golang.org'
     else
       pkg_type
