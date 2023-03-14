@@ -1,4 +1,4 @@
-class ParseSbomWokrker
+class ParseSbomWorker
   include Sidekiq::Worker
 
   def perform(version_id)
