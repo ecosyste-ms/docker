@@ -22,8 +22,9 @@ class Version < ApplicationRecord
     # TODO SYFT_REGISTRY_AUTH_USERNAME
     results = `syft #{self.package.name}:#{self.number} --quiet --output syft-json`
     json = JSON.parse(results)
+    self.sbom = json
     update(sbom: json, last_synced_at: Time.now)
-    package.update(has_sbom: true, last_synced_at: Time.now)
+    package.update(has_sbom: true, last_synced_at: Time.now, dependencies_count: purls.length)
   rescue => e
     json = nil
     update(sbom: json, last_synced_at: Time.now)
