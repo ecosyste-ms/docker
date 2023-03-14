@@ -7,6 +7,7 @@
     <h2>Dependencies</h2>
     
     <% @version.purls.map{|purl| PackageURL.parse(purl) }.group_by{|pkg| pkg.type }.each do |type, pkgs| %>
+      <% next if type == 'generic' %>
       <h3><%= type %></h3>
       <ul>
         <% pkgs.group_by{|pkg| [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/') }.each do |name, versions| %>

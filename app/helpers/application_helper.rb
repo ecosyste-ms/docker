@@ -15,7 +15,7 @@ module ApplicationHelper
       'nuget.org'
     when 'cran'
       'cran.r-project.org'
-    when 'packagist'
+    when 'composer'
       'packagist.org'
     when 'cocoapods'
       'cocoapods.org'
@@ -23,8 +23,10 @@ module ApplicationHelper
       'clojars.org'
     when 'alpine'
       'alpine-v3.13'
+    when 'go'
+      'proxy.golang.org'
     else
-      'pkg_type'
+      pkg_type
     end 
   end
 
