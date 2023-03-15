@@ -1,5 +1,10 @@
 <div class="container-sm">
-  <h1 class='my-4'>Recently Parsed Docker Images</h1>
+  <h1 class='my-4'>
+    Recently Updated Docker Projects
+    <small class='text-muted'>
+      <%= number_with_delimiter @pagy.count %>
+    </small>
+  </h1>
 
   <%= render @packages %>
   <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
