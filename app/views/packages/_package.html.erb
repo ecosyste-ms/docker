@@ -9,13 +9,21 @@
       <% end %>
     </h5>
 
+    <p class="card-text">
+      <%= package.description %>
+    </p>
+
     <small class='text-muted'>
       <% if package.latest_release_published_at %>
         <span title="<%= package.latest_release_published_at %>">Latest release: <%= time_ago_in_words package.latest_release_published_at %> ago</span>
       <% end %>
       
+      <% if package.downloads %>
+        - <%= number_with_delimiter package.downloads %> downloads
+      <% end %>
+
       <% if package.dependencies_count %>
-        - <%= package.dependencies_count %> dependencies
+        - <%= number_with_delimiter package.dependencies_count %> dependencies
       <% end %>
     </small>
   </div>

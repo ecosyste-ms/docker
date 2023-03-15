@@ -12,9 +12,20 @@ class Package < ApplicationRecord
     name
   end
 
+  def sync
+    response = Faraday.get(packages_api_url)
+    return unless response.success?
+    json = JSON.parse(response.body)
+    self.update(
+      versions_count: versions.count,
+      description: json["description"],
+      downloads: json["downloads"],
+      repository_url: json["repository_url"]
+    )
+  end
+
   def self.sync_popular
     page = (REDIS.get('next_popular_page') || 1).to_i
-    p page
     url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=100&page=#{page}"
     response = Faraday.get(url)
     return unless response.success?
@@ -22,6 +33,11 @@ class Package < ApplicationRecord
     json.each do |package|
       next if package['downloads'].nil?
       p = Package.find_or_create_by(name: package["name"])
+      p.update({
+        description: json["description"],
+        downloads: json["downloads"],
+        repository_url: json["repository_url"]
+      })
       p.sync_latest_release
     end
     REDIS.set('next_popular_page', page + 1)
