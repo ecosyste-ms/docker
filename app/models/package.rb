@@ -34,9 +34,9 @@ class Package < ApplicationRecord
       next if package['downloads'].nil?
       p = Package.find_or_create_by(name: package["name"])
       p.update({
-        description: json["description"],
-        downloads: json["downloads"],
-        repository_url: json["repository_url"]
+        description: package["description"],
+        downloads: package["downloads"],
+        repository_url: package["repository_url"]
       })
       p.sync_latest_release
     end
