@@ -1,6 +1,6 @@
 class DependenciesController < ApplicationController
   def index
-    @ecosystems = Dependency.group(:ecosystem).count.sort_by { |k, v| v }.reverse
+    @ecosystems = Dependency.group(:ecosystem, :package_name).count.keys.group_by{|k,v| k}.map{|k,v| [k,v.length]}.sort_by { |k, v| v }.reverse
   end
 
   def ecosystem
