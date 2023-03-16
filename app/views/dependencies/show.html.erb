@@ -5,6 +5,10 @@
 
   <p>Total downloads: <%= number_with_delimiter @total_downloads %></p>
 
+  <p>
+    <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}/packages/#{@package_name}", target: :_blank %>
+  </p>
+
   <% @dependencies.group_by{|d| d.package }.each do |package, dependencies| %>
     <% dependency = dependencies.first %>
     <% version = dependency.version %>

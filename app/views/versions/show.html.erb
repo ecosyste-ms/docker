@@ -32,7 +32,7 @@
         <% pkgs.group_by{|pkg| [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/') }.each do |name, versions| %>
         <% pkg = versions.first%>
         <li>
-          <%= link_to name, "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(pkg.type)}/packages/#{[pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/')}", target: :_blank %>
+          <%= link_to name, dependency_path(type, name) %>
           <small class='text-muted'>
             <%= versions.map{|p| p.version }.join(', ') %>
           </small>
