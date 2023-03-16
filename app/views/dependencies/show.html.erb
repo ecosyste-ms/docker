@@ -1,0 +1,51 @@
+<div class="container-sm">
+  <h1><%= link_to 'Package Usage', dependencies_path %> : <%= link_to @ecosystem, ecosystem_dependencies_path(@ecosystem) %> : <%= @package_name %></h1>
+
+  <% @dependencies.each do |dependency| %>
+    <% package = dependency.package %>
+    <% version = dependency.version %>
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">
+          <%= link_to package.name, package_path(package.name) %>
+          <small class='text-muted'>
+            <%= version.number %>
+          </small>
+        </h5>
+
+        <p class="card-text">
+          <%= package.description %>
+        </p>
+
+        <small class='text-muted'>
+        <ul>
+          <li>
+            version: <%= dependency.requirements %>
+          </li>
+          <% dependency.package_url.qualifiers.each do |k,v| %>
+            <li>
+              <%= k %>: <%= v %>
+            </li>
+          <% end %>
+        </ul>
+        </small>
+
+        <small class='text-muted'>
+          <% if package.latest_release_published_at %>
+            <span title="<%= package.latest_release_published_at %>">Latest release: <%= time_ago_in_words package.latest_release_published_at %> ago</span>
+          <% end %>
+          
+          <% if package.downloads %>
+            - <%= number_with_delimiter package.downloads %> downloads
+          <% end %>
+
+          <% if package.dependencies_count %>
+            - <%= number_with_delimiter package.dependencies_count %> dependencies
+          <% end %>
+        </small>
+      </div>
+    </div>
+  <% end %>
+
+  <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
+</div>

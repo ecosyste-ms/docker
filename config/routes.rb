@@ -13,6 +13,10 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
   mount PgHero::Engine, at: "pghero"
 
+  get '/dependencies', to: 'dependencies#index', as: 'dependencies'
+  get '/dependencies/:ecosystem', to: 'dependencies#ecosystem', as: 'ecosystem_dependencies'
+  get '/dependencies/:ecosystem/:id', to: 'dependencies#show', constraints: { id: /.*/ }, as: 'dependency'
+
   resources :packages, only: [:index, :show], constraints: { id: /.*/ }, :defaults => {:format => :html} do
     resources :versions
   end

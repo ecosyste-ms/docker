@@ -2,7 +2,9 @@ class Package < ApplicationRecord
 
   validates :name, presence: true, uniqueness: true
 
-  has_many :versions
+  has_many :versions, dependent: :delete_all
+  has_many :dependencies, dependent: :delete_all
+
 
   def to_s
     name
