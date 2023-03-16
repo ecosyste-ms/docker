@@ -35,6 +35,6 @@ module ApplicationHelper
   end
 
   def meta_description
-    @meta_description || 'An open API service providing dependency metadata for docker projects.'
+    @meta_description || 'An open API service providing dependency metadata for docker images.'
   end
 end
