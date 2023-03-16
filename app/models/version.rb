@@ -42,17 +42,22 @@ class Version < ApplicationRecord
   def save_dependencies
     dependencies.delete_all
     deps = purls.map do |purl|
-      pkg = PackageURL.parse(purl)
+      begin
+        pkg = PackageURL.parse(purl)
 
-      {
-        version_id: id,
-        package_id: package.id, 
-        ecosystem: pkg.type, 
-        package_name: [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/'), 
-        requirements: pkg.version || '*', 
-        purl: purl
-      }
-    end
+        {
+          version_id: id,
+          package_id: package.id, 
+          ecosystem: pkg.type, 
+          package_name: [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/'), 
+          requirements: pkg.version || '*', 
+          purl: purl
+        }
+      rescue
+        nil
+      end
+    end.compact
+    return if deps.empty?
 
     Dependency.insert_all(deps)
   end
