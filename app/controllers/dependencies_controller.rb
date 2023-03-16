@@ -13,7 +13,7 @@ class DependenciesController < ApplicationController
     @ecosystem = params[:ecosystem]
     @package_name = params[:id]
     @scope = Dependency.where(ecosystem: params[:ecosystem], package_name: params[:id]).includes(:package, :version)
-    @total_downloads = Package.where(id: @scope.pluck(:package_id)).sum(:downloads)
+    @total_downloads = Package.where(id: @scope.pluck(:package_id).uniq).sum(:downloads)
     @pagy, @dependencies = pagy(@scope.order('package_id asc'))
   end
 end
