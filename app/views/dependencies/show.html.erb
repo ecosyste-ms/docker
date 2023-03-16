@@ -3,8 +3,8 @@
 
   <p>Total downloads: <%= number_with_delimiter @total_downloads %></p>
 
-  <% @dependencies.each do |dependency| %>
-    <% package = dependency.package %>
+  <% @dependencies.group_by{|d| d.package }.each do |package, dependencies| %>
+    <% dependency = dependencies.first %>
     <% version = dependency.version %>
     <div class="card mb-3">
       <div class="card-body">
@@ -22,7 +22,7 @@
         <small class='text-muted'>
         <ul>
           <li>
-            version: <%= dependency.requirements %>
+            version: <%= dependencies.map(&:requirements).uniq.join(', ') %>
           </li>
           <% if dependency.package_url.qualifiers %>
             <% dependency.package_url.qualifiers.each do |k,v| %>
