@@ -24,10 +24,12 @@
           <li>
             version: <%= dependency.requirements %>
           </li>
-          <% dependency.package_url.qualifiers.each do |k,v| %>
-            <li>
-              <%= k %>: <%= v %>
-            </li>
+          <% if dependency.package_url.qualifiers %>
+            <% dependency.package_url.qualifiers.each do |k,v| %>
+              <li>
+                <%= k %>: <%= v %>
+              </li>
+            <% end %>
           <% end %>
         </ul>
         </small>
