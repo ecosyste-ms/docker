@@ -38,7 +38,7 @@ class Package < ApplicationRecord
         downloads: package["downloads"],
         repository_url: package["repository_url"]
       })
-      p.sync_latest_release
+      p.sync_latest_release rescue nil
     end
     REDIS.set('next_popular_page', page + 1)
   end
