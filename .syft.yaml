@@ -1,0 +1,24 @@
+catalogers:
+  - ruby-gemfile
+  - ruby-gemspec
+  - python-index
+  - python-package
+  - javascript-lock
+  - javascript-package
+  - php-composer-installed
+  - php-composer-lock
+  - alpmdb
+  - dpkgdb
+  - rpmdb
+  - java
+  - java-pom
+  - apkdb
+  - go-module-binary
+  - go-mod-file
+  - dartlang-lock
+  - rust
+  - rust-cargo-lock
+  - cocoapods
+  - hackage
+  - conan
+  - dotnet-deps
