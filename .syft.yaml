@@ -20,6 +20,7 @@ catalogers:
   - rust-cargo-lock
   - cocoapods
   - hackage
+  - haskell
   - conan
   - dotnet-deps
   - elixir-mix-lock
