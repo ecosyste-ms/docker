@@ -22,3 +22,6 @@ catalogers:
   - hackage
   - conan
   - dotnet-deps
+  - elixir-mix-lock
+  - erlang-rebar-lock
+  - portage
