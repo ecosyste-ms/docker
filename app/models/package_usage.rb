@@ -43,4 +43,9 @@ class PackageUsage < ApplicationRecord
       find_or_create_by_ecosystem_and_name(d.ecosystem, d.package_name)
     end
   end
+
+  def self.update_all_counts
+    PackageUsage.create_all
+    PackageUsage.all.find_each(&:update_counts)
+  end
 end

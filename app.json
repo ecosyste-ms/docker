@@ -3,6 +3,10 @@
     {
       "command": "bundle exec rake packages:sync_popular",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "command": "bundle exec rake packages:update_counts",
+      "schedule": "0 */2 * * *"
     }
   ]
 }
