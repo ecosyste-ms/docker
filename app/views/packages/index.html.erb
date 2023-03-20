@@ -6,6 +6,10 @@
     </small>
   </h1>
 
+  <ul class="nav nav-tabs my-3">
+    <%= render 'sort'%>
+  </ul>
+
   <%= render @packages %>
   <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
 </div>

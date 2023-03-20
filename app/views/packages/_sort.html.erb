@@ -1,0 +1,13 @@
+<li class="nav-item ms-auto">
+  <div class="dropdown">
+    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Sort
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item <%= 'active' if params[:sort] == 'name' %>" href="<%= url_for(sort: 'name', order: 'asc') %>">Name</a></li>
+      <li><a class="dropdown-item <%= 'active' if params[:sort] == 'latest_release_published_at' %>" href="<%= url_for(sort: 'latest_release_published_at', order: 'desc') %>">Latest Release</a></li>
+      <li><a class="dropdown-item <%= 'active' if params[:sort] == 'dependencies_count' %>" href="<%= url_for(sort: 'dependencies_count', order: 'desc') %>">Dependencies</a></li>
+      <li><a class="dropdown-item <%= 'active' if params[:sort] == 'downloads' %>" href="<%= url_for(sort: 'downloads', order: 'desc') %>">Downloads</a></li>
+    </ul>
+  </div>
+</li>

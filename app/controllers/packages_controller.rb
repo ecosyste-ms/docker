@@ -1,7 +1,15 @@
 class PackagesController < ApplicationController
   def index
-    @scope = Package.where(has_sbom: true).where('dependencies_count > 0').order('packages.last_synced_at DESC')
-    @pagy, @packages = pagy(@scope)
+    scope = Package.where(has_sbom: true).where('dependencies_count > 0')
+    
+    sort = params[:sort].presence || 'last_synced_at'
+    if params[:order] == 'asc'
+      scope = scope.order(Arel.sql(sort).asc.nulls_last)
+    else
+      scope = scope.order(Arel.sql(sort).desc.nulls_last)
+    end
+    
+    @pagy, @packages = pagy(scope)
   end
 
   def show
