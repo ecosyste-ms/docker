@@ -1,18 +1,19 @@
 class DependenciesController < ApplicationController
   def index
-    @ecosystems = Dependency.group(:ecosystem, :package_name).count.keys.group_by{|k,v| k}.map{|k,v| [k,v.length]}.sort_by { |k, v| v }.reverse
+    @ecosystems = PackageUsage.group(:ecosystem).count.sort_by { |k, v| v }.reverse
   end
 
   def ecosystem
     @ecosystem = params[:ecosystem]
-    @scope = Dependency.where(ecosystem: params[:ecosystem]).group(:package_name).count.sort_by { |k, v| v }.reverse
+    @scope = PackageUsage.where(ecosystem: @ecosystem).order('dependents_count desc')
     @pagy, @dependencies = pagy_array(@scope)
   end
 
   def show
     @ecosystem = params[:ecosystem]
     @package_name = params[:id]
-    @scope = Dependency.where(ecosystem: params[:ecosystem], package_name: params[:id]).includes(:package, :version)
+    @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
+    @scope = @package_usage.dependencies.includes(:package, :version)
     @total_downloads = Package.where(id: @scope.pluck(:package_id).uniq).sum(:downloads)
     @pagy, @dependencies = pagy(@scope.order('package_id asc'))
   end

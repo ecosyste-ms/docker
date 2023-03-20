@@ -3,7 +3,7 @@
 <div class="container-sm">
   <h1><%= link_to 'Package Usage', dependencies_path %> : <%= @ecosystem %> </h1>
 
-  <% @dependencies.each do |dependency, count| %>
+  <% @dependencies.each do |dependency| %>
     <div class="card mb-3">
       <div class="card-body">
         <h5 class="card-title">
@@ -11,7 +11,8 @@
         </h5>
         
         <small class='text-muted'>
-          <%= pluralize number_with_delimiter(count), 'dependent images' %> 
+          <%= pluralize number_with_delimiter(dependency.dependents_count), 'dependent images' %> - 
+          <%= pluralize number_with_delimiter(dependency.downloads_count), 'total downloads' %> 
         </small>
       </div>
     </div>
