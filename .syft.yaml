@@ -1,4 +1,5 @@
 catalogers:
+  - binary
   - ruby-gemfile
   - ruby-gemspec
   - python-index
