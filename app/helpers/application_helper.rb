@@ -25,6 +25,10 @@ module ApplicationHelper
       'alpine-v3.13'
     when 'golang'
       'proxy.golang.org'
+    when 'cargo'
+      'crates.io'
+    when 'pub'
+      'pub.dev'
     else
       pkg_type
     end 
