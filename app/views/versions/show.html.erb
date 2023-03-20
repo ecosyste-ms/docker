@@ -25,24 +25,37 @@
   <% if @version.dependencies.any? %>
     <h2>Dependencies</h2>
     
-    <div class="card my-3">
-      <% @version.dependencies.group_by{|d| d.ecosystem}.each do |ecosystem, dependencies| %>
+      <% groups = @version.dependencies.group_by{|d| d.ecosystem} %>
 
-        <div class="card-header">
-          <%= ecosystem %>
-        </div>
-        <ul class="list-group list-group-flush">
-          <% dependencies.each do |dependency| %>
-            <% next if dependency.package_name.starts_with?('.')%>
-            <li class="list-group-item">
-              <%= link_to dependency.package_name, dependency_path(dependency.ecosystem, dependency.package_name) %>
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <% groups.each_with_index do |group,index| %>
+          <% ecosystem, dependencies = group %>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link <%= 'active' if index.zero? %>" id="<%= ecosystem %>-tab" data-bs-toggle="tab" data-bs-target="#<%= ecosystem %>" type="button" role="tab" aria-controls="<%= ecosystem %>" aria-selected="true">
+            <%= ecosystem %>
+              <span class="ms-2 badge bg-primary rounded-pill"><%= number_with_delimiter dependencies.length%></span>
+            </button>
+          </li>
+        <% end %>
+      </ul>
 
-              <small class='text-muted'>
-                <i><%= dependency.requirements %></i>
-              </small>
-            </li>
-          <% end %>
-        </ul>
+      <div class="tab-content" id="myTabContent">
+        <% groups.each_with_index do |group,index| %>
+          <% ecosystem, dependencies = group %>
+          <div class="tab-pane fade show <%= 'active' if index.zero? %>" id="<%= ecosystem %>" role="tabpanel" aria-labelledby="<%= ecosystem %>-tab">           
+            <ul class="list-group list-group-flush">
+              <% dependencies.each do |dependency| %>
+                <% next if dependency.package_name.starts_with?('.')%>
+                <li class="list-group-item">
+                  <%= link_to dependency.package_name, dependency_path(dependency.ecosystem, dependency.package_name) %>
+
+                  <small class='text-muted'>
+                    <i><%= dependency.requirements %></i>
+                  </small>
+                </li>
+              <% end %>
+            </ul>
+          </div>
       <% end %>
     </div>
   <% end %>
