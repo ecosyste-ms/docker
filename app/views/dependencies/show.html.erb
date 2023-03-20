@@ -3,7 +3,7 @@
 <div class="container-sm">
   <h1><%= link_to 'Package Usage', dependencies_path %> : <%= link_to @ecosystem, ecosystem_dependencies_path(@ecosystem) %> : <%= @package_name %></h1>
 
-  <p>Total downloads: <%= number_with_delimiter @total_downloads %></p>
+  <p>Total downloads: <%= number_with_delimiter @@package_usage.total_downloads %></p>
 
   <p>
     <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}/packages/#{@package_name}", target: :_blank %>

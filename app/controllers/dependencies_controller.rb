@@ -6,7 +6,7 @@ class DependenciesController < ApplicationController
   def ecosystem
     @ecosystem = params[:ecosystem]
     @scope = PackageUsage.where(ecosystem: @ecosystem).order('dependents_count desc')
-    @pagy, @dependencies = pagy_array(@scope)
+    @pagy, @dependencies = pagy(@scope)
   end
 
   def show
@@ -14,7 +14,6 @@ class DependenciesController < ApplicationController
     @package_name = params[:id]
     @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
     @scope = @package_usage.dependencies.includes(:package, :version)
-    @total_downloads = Package.where(id: @scope.pluck(:package_id).uniq).sum(:downloads)
     @pagy, @dependencies = pagy(@scope.order('package_id asc'))
   end
 end
