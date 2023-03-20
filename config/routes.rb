@@ -13,9 +13,24 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
   mount PgHero::Engine, at: "pghero"
 
-  get '/dependencies', to: 'dependencies#index', as: 'dependencies'
-  get '/dependencies/:ecosystem', to: 'dependencies#ecosystem', as: 'ecosystem_dependencies'
-  get '/dependencies/:ecosystem/:id', to: 'dependencies#show', constraints: { id: /.*/ }, as: 'dependency'
+  namespace :api, :defaults => {:format => :json} do
+    namespace :v1 do
+      resources :packages, constraints: { id: /.*/ }, only: [:index, :show] do 
+        resources :versions, only: [:index, :show], constraints: { id: /.*/ }
+      end
+
+      get '/usage', to: 'package_usages#index', as: 'package_usages'
+      get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
+      get 'usage/:ecosystem/:name/dependencies', to: 'package_usages#dependencies', as: :package_usage_dependencies, constraints: { name: /.*/ }
+      get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage'
+      
+
+    end
+  end
+
+  get '/usage', to: 'package_usages#index', as: 'package_usages'
+  get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
+  get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage'
 
   resources :packages, only: [:index, :show], constraints: { id: /.*/ }, :defaults => {:format => :html} do
     resources :versions

@@ -1,7 +1,7 @@
 <% @meta_title = "#{@package_name} | #{@ecosystem} | Package Usage" %>
 
 <div class="container-sm">
-  <h1><%= link_to 'Package Usage', dependencies_path %> : <%= link_to @ecosystem, ecosystem_dependencies_path(@ecosystem) %> : <%= @package_name %></h1>
+  <h1><%= link_to 'Package Usage', package_usages_path %> : <%= link_to @ecosystem, ecosystem_package_usages_path(@ecosystem) %> : <%= @package_name %></h1>
 
   <p>Total downloads: <%= number_with_delimiter @package_usage.downloads_count %></p>
 

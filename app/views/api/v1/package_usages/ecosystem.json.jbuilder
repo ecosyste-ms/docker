@@ -1,0 +1,1 @@
+json.array! @package_usages, partial: 'api/v1/package_usages/package_usage', as: :package_usage

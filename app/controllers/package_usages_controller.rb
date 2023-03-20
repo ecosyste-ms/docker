@@ -1,4 +1,4 @@
-class DependenciesController < ApplicationController
+class PackageUsagesController < ApplicationController
   def index
     @ecosystems = PackageUsage.group(:ecosystem).count.sort_by { |k, v| v }.reverse
   end

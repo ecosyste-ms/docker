@@ -1,0 +1,323 @@
+openapi: 3.0.1
+info:
+  title: "Ecosyste.ms: Docker"
+  description: "An open API service providing dependency metadata for docker images."
+  contact:
+    name: Ecosyste.ms
+    email: support@ecosyste.ms
+    url: https://ecosyste.ms 
+  version: 1.0.0
+  license:
+    name: CC-BY-4.0
+    url: https://creativecommons.org/licenses/by/4.0/
+externalDocs:
+  description: GitHub Repository
+  url: https://github.com/ecosyste-ms/docker
+servers:
+- url: https://docker.ecosyste.ms/api/v1
+paths:
+  /packages:
+    get:
+      summary: get a list of packages
+      operationId: getPackages
+      tags:
+        - packages
+      parameters:
+        - name: page
+          in: query
+          description: pagination page number 
+          required: false
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of records to return 
+          required: false
+          schema:
+            type: integer
+        - name: created_after
+          in: query
+          description: filter by created_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updated_after
+          in: query
+          description: filter by updated_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: field to order results by
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: direction to order results by
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Package'
+  /packages/{packageName}:
+    get:
+      summary: get a package by name
+      operationId: getPackage
+      tags:
+        - packages
+      parameters:
+        - in: path
+          name: packageName
+          schema:
+            type: string
+          required: true
+          description: name of package
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Package'
+  /packages/{packageName}/versions:
+    get:
+      summary: get a list of versions for a package
+      operationId: getPackageVersions
+      tags:
+        - packages
+      parameters:
+        - in: path
+          name: packageName
+          schema:
+            type: string
+          required: true
+          description: name of package
+        - name: page
+          in: query
+          description: pagination page number 
+          required: false
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of records to return 
+          required: false
+          schema:
+            type: integer
+        - name: created_after
+          in: query
+          description: filter by created_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updated_after
+          in: query
+          description: filter by updated_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: published_after
+          in: query
+          description: filter by published_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: field to order results by
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: direction to order results by
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Version'
+  /packages/{packageName}/versions/{versionNumber}:
+    get:
+      summary: get a version of a package
+      operationId: getPackageVersion
+      tags:
+        - packages
+      parameters:
+        - in: path
+          name: packageName
+          schema:
+            type: string
+          required: true
+          description: name of package
+        - in: path
+          name: versionNumber
+          schema:
+            type: string
+          required: true
+          description: number of version
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+  /usage:
+    get:
+      summary: "Get package usage ecosystems"
+      operationId: "usage"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ecosystem'
+  /usage/{ecosystem}:
+    get:
+      summary: "Get package usage for an ecosystem"
+      operationId: "usageEcosystem"
+      parameters:
+        - name: ecosystem
+          in: path
+          description: "The ecosystem to get usage for"
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackageUsage'
+  /usage/{ecosystem}/{package}:
+    get:
+      summary: "Get package usage for a package"
+      operationId: "usagePackage"
+      parameters:
+        - name: ecosystem
+          in: path
+          description: "The ecosystem to get usage for"
+          required: true
+          schema:
+            type: string
+        - name: package
+          in: path
+          description: "The package to get usage for"
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageUsage'
+components:
+  schemas:
+    Package:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        versions_count:
+          type: integer
+        latest_release_published_at:
+          type: string
+          format: date-time
+        latest_release_number:
+          type: string
+        last_synced_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        downloads:
+          type: integer
+        versions_url:
+          type: string
+    Version:
+      type: object
+      properties:
+          number:
+            type: string
+          published_at:
+            type: string
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
+          purl:
+            type: string
+          dependencies:
+            type: array
+            items:
+              $ref: '#/components/schemas/Dependency'
+    Dependency:
+      type: object
+      properties:
+        ecosystem:
+          type: string
+        package_name:
+          type: string
+        requirements:
+          type: string
+    Ecosystem:
+      type: object
+      properties:
+        name:
+          type: string
+        packages_count:
+          type: integer
+        ecosystem_url:
+          type: string
+    PackageUsage:
+      type: object
+      properties:
+        ecosystem:
+          type: string
+        name:
+          type: string
+        dependents_count:
+          type: integer
+        requirements:
+          type: object
+        package_usage_url:
+          type: string
+        dependencies_url:
+          type: string
