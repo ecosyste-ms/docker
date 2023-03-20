@@ -6,6 +6,6 @@ class PackagesController < ApplicationController
 
   def show
     @package = Package.find_by_name(params[:id])
-    @pagy, @versions = pagy(@package.versions)
+    @pagy, @versions = pagy(@package.versions.select(:package_id,:number,:published_at,:last_synced_at))
   end
 end

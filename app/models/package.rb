@@ -34,6 +34,11 @@ class Package < ApplicationRecord
     json = JSON.parse(response.body)
     json.each do |package|
       next if package['downloads'].nil?
+      next if package['status'].present?
+      if package['downloads'] == 0
+        page = 0
+        break 
+      end
       p = Package.find_or_create_by(name: package["name"])
       p.update({
         description: package["description"],
@@ -54,7 +59,7 @@ class Package < ApplicationRecord
   end
 
   def latest_release
-    versions.sort_by(&:published_at).last
+    version.select(:package_id,:number,:published_at,:last_synced_at).sort_by(&:published_at).last
   end
 
   def sync_latest_release

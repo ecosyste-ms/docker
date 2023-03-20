@@ -22,23 +22,28 @@
     </small>
   </p>
 
-  <% if @version.purls.any? %>
+  <% if @version.dependencies.any? %>
     <h2>Dependencies</h2>
     
-    <% @version.purls.map{|purl| PackageURL.parse(purl) }.group_by{|pkg| pkg.type }.each do |type, pkgs| %>
-      <% next if type == 'generic' %>
-      <h3><%= type %></h3>
-      <ul>
-        <% pkgs.group_by{|pkg| [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/') }.each do |name, versions| %>
-        <% pkg = versions.first%>
-        <li>
-          <%= link_to name, dependency_path(type, name) %>
-          <small class='text-muted'>
-            <%= versions.map{|p| p.version }.join(', ') %>
-          </small>
-        </li>
+    <div class="card my-3">
+      <% @version.dependencies.group_by{|d| d.ecosystem}.each do |ecosystem, dependencies| %>
+
+        <div class="card-header">
+          <%= ecosystem %>
+        </div>
+        <ul class="list-group list-group-flush">
+          <% dependencies.each do |dependency| %>
+            <% next if dependency.package_name.starts_with?('.')%>
+            <li class="list-group-item">
+              <%= link_to dependency.package_name, dependency_path(dependency.ecosystem, dependency.package_name) %>
+
+              <small class='text-muted'>
+                <i><%= dependency.requirements %></i>
+              </small>
+            </li>
+          <% end %>
+        </ul>
       <% end %>
-    </ul>
-    <% end %>
+    </div>
   <% end %>
 </div>
