@@ -13,7 +13,7 @@ class PackageUsagesController < ApplicationController
     @ecosystem = params[:ecosystem]
     @package_name = params[:id]
     @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
-    @scope = @package_usage.dependencies.includes(:package, :version)
+    @scope = @package_usage.dependencies.includes(:package)
     @pagy, @dependencies = pagy(@scope.order('package_id asc'))
   end
 end

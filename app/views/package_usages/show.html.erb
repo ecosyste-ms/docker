@@ -11,13 +11,13 @@
 
   <% @dependencies.group_by{|d| d.package }.each do |package, dependencies| %>
     <% dependency = dependencies.first %>
-    <% version = dependency.version %>
+    
     <div class="card mb-3">
       <div class="card-body">
         <h5 class="card-title">
           <%= link_to package.name, package_path(package.name) %>
           <small class='text-muted'>
-            <%= version.number %>
+            <%= package.latest_release_number %>
           </small>
         </h5>
 

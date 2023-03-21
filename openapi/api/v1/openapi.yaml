@@ -284,6 +284,8 @@ components:
             format: date-time
           purl:
             type: string
+          distro:
+            type: string
           dependencies:
             type: array
             items:

@@ -59,7 +59,7 @@ class Package < ApplicationRecord
   end
 
   def latest_release
-    version.select(:package_id,:number,:published_at,:last_synced_at).sort_by(&:published_at).last
+    version.sort_by(&:published_at).last
   end
 
   def sync_latest_release

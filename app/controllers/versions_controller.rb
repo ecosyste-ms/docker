@@ -6,6 +6,6 @@ class VersionsController < ApplicationController
 
   def show
     @package = Package.find_by_name(params[:package_id])
-    @version = @package.versions.select(:package_id,:number,:published_at,:last_synced_at).where(number: params[:id]).includes(:dependencies).references(:dependencies).first
+    @version = @package.versions.where(number: params[:id]).includes(:dependencies).first
   end
 end

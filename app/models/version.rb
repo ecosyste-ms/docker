@@ -15,6 +15,11 @@ class Version < ApplicationRecord
     number
   end
   
+  def distro
+    return nil if sbom.nil?
+    sbom['distro']['prettyName']
+  end
+
   def parse_sbom_async
     ParseSbomWorker.perform_async(self.id)
   end

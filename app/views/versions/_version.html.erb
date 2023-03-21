@@ -3,6 +3,10 @@
     <h5 class="card-title">
       <%= link_to version, [version.package, version] %>
     </h5>
+
+    <p>
+      <%= version.distro %>
+    </p>
     
     <small class='text-muted'>
       <% if version.published_at %>
