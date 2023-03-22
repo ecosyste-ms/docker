@@ -17,16 +17,17 @@ class Api::V1::PackageUsagesController < Api::V1::ApplicationController
     end
 
     @pagy, @package_usages = pagy(scope)
+    raise ActiveRecord::RecordNotFound unless @package_usages.any?
   end
 
   def show
     @ecosystem = params[:ecosystem]
-    @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name(params[:id])
+    @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name!(params[:id])
   end
 
   def dependencies
     @ecosystem = params[:ecosystem]
-    @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name(params[:name])
+    @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name!(params[:name])
     @scope = @package_usage.dependencies.includes(:package, :version)
     @pagy, @dependencies = pagy(@scope)
   end
