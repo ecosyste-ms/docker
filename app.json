@@ -2,7 +2,7 @@
   "cron": [
     {
       "command": "bundle exec rake packages:sync_popular",
-      "schedule": "*/15 * * * *"
+      "schedule": "*/30 * * * *"
     },
     {
       "command": "bundle exec rake packages:update_counts",
