@@ -68,7 +68,7 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.2)
       public_suffix (>= 2.0.2, < 6.0)
-    appsignal (3.3.8)
+    appsignal (3.3.10)
       rack
     autoprefixer-rails (10.4.13.0)
       execjs (~> 2)
@@ -255,7 +255,7 @@ GEM
       connection_pool (>= 2.3.0)
       rack (>= 2.2.4)
       redis-client (>= 0.11.0)
-    sidekiq-status (3.0.1)
+    sidekiq-status (3.0.2)
       chronic_duration
       sidekiq (>= 6.0, < 8)
     sidekiq-unique-jobs (8.0.2)
