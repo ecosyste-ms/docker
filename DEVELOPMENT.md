@@ -10,6 +10,7 @@ The project uses ruby on rails which have a number of system dependencies you'll
 
 - [ruby 3.2.2](https://www.ruby-lang.org/en/documentation/installation/)
 - [postgresql 14](https://www.postgresql.org/download/)
+- [redis 6+](https://redis.io/download/)
 - [node.js 16+](https://nodejs.org/en/download/)
 
 Once you've got all of those installed, from the root directory of the project run the following commands:
@@ -49,7 +50,7 @@ The default set of supported data sources are listed in [db/seeds.rb](db/seeds.r
 
 You can then start syncing data for each source with the following command, this may take a while:
 
-`rake docker:sync`
+`rake packages:sync`
 
 ## Tests
 
