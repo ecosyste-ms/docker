@@ -28,7 +28,7 @@ class Package < ApplicationRecord
 
   def self.sync_popular
     page = (REDIS.get('next_popular_page') || 1).to_i
-    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=100&page=#{page}"
+    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=50&page=#{page}"
     response = Faraday.get(url)
     return unless response.success?
     json = JSON.parse(response.body)
