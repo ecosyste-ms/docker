@@ -33,7 +33,7 @@ gem 'sidekiq-status'
 gem 'addressable'
 gem 'appsignal'
 gem 'packageurl-ruby', require: 'package_url'
-gem 'google-protobuf', '3.22.3'
+gem 'google-protobuf', '3.23.0'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri mingw x64_mingw ]
