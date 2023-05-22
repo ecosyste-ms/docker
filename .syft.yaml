@@ -27,3 +27,4 @@ catalogers:
   - elixir-mix-lock
   - erlang-rebar-lock
   - portage
+  - r-package
