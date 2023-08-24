@@ -3,6 +3,6 @@ namespace :exports do
   task record: :environment do
     date = ENV['EXPORT_DATE'] || Date.today.strftime('%Y-%m-%d')
     bucket_name = ENV['BUCKET_NAME'] || 'ecosystems-data'
-    Export.create!(date: date, bucket_name: bucket_name, images_count: Package.count)
+    Export.create!(date: date, bucket_name: bucket_name, images_count: Package.where(has_sbom: true).count)
   end
 end

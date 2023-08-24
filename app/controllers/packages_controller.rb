@@ -1,6 +1,6 @@
 class PackagesController < ApplicationController
   def index
-    scope = Package.where(has_sbom: true).where('dependencies_count > 0')
+    scope = Package.where(has_sbom: true)
     
     sort = params[:sort].presence || 'last_synced_at'
     if params[:order] == 'asc'
