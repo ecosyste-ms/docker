@@ -19,7 +19,7 @@
       <% end %>
 
       <% if package.versions_count && package.versions_count > 0 %>
-        - <%= pluralize number_with_delimiter(package.versions_count), 'version' %>
+        - <%= pluralize number_with_delimiter(package.versions_count), 'release' %>
       <% end %>
 
       <% if package.downloads %>
