@@ -7,5 +7,6 @@ class VersionsController < ApplicationController
   def show
     @package = Package.find_by_name(params[:package_id])
     @version = @package.versions.where(number: params[:id]).includes(:dependencies).first
+    raise ActiveRecord::RecordNotFound unless @version
   end
 end

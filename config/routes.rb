@@ -33,7 +33,7 @@ Rails.application.routes.draw do
   get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage'
 
   resources :packages, only: [:index, :show], constraints: { id: /.*/ }, :defaults => {:format => :html} do
-    resources :versions
+    resources :versions, only: [:index, :show]
   end
 
   resources :exports, only: [:index], path: 'open-data'
