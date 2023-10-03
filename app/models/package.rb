@@ -84,6 +84,6 @@ class Package < ApplicationRecord
   end
 
   def self.syft_version
-    `syft --version`.strip.split(' ').last
+    @syft_version ||= `syft --version`.strip.split(' ').last
   end
 end
