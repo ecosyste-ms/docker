@@ -9,6 +9,8 @@
 
   <p>
     <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}/packages/#{@package_name}", target: :_blank %>
+    -
+    <%= link_to 'JSON', api_v1_package_usage_url(@ecosystem, @package_name) %>
   </p>
 
   <% @dependencies.group_by{|d| d.package }.each do |package, dependencies| %>

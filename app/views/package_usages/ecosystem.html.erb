@@ -3,6 +3,12 @@
 <div class="container-sm">
   <h1><%= link_to 'Package Usage', package_usages_path %> : <%= @ecosystem %> </h1>
 
+  <p>
+    <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}", target: :_blank %>
+    -
+    <%= link_to 'JSON', api_v1_ecosystem_package_usages_url(@ecosystem) %>
+  </p>
+
   <% @dependencies.each do |dependency| %>
     <div class="card mb-3">
       <div class="card-body">

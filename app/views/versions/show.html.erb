@@ -26,6 +26,8 @@
     </small>
   </p>
 
+  <%= link_to 'JSON', api_v1_package_version_url(@package, @version)%>
+
   <% if @version.dependencies.any? %>
     <h2>Dependencies</h2>
     

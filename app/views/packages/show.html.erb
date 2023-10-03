@@ -24,7 +24,10 @@
 
   <p>
     <a href="<%= @package.packages_html_url %>" target="_blank" rel="noopener noreferrer">More details on packages.ecosyste.ms</a>
+    - 
+    <%= link_to 'JSON', api_v1_package_url(@package)%>
   </p>
+
 
   <h2>Versions</h2>
   <%= render @versions %>
