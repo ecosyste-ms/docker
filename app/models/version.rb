@@ -27,7 +27,7 @@ class Version < ApplicationRecord
 
   def outdated?
     return false if syft_version.nil?
-    syft_version != package.syft_version
+    syft_version != Package.syft_version
   end
 
   def parse_sbom_async
