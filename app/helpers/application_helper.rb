@@ -29,6 +29,8 @@ module ApplicationHelper
       'crates.io'
     when 'pub'
       'pub.dev'
+    when 'github'
+      'github actions'
     else
       pkg_type
     end 
