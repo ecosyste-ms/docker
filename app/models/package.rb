@@ -70,7 +70,10 @@ class Package < ApplicationRecord
     number = json["latest_release_number"] || "latest"
     published_at = json["latest_release_published_at"]
 
-    return if latest_release_published_at == Time.parse(published_at)
+    if latest_release_published_at == Time.parse(published_at)
+      latest_release.parse_sbom_async if latest_release.outdated?
+      return 
+    end
 
     version = versions.find_or_create_by(number: number)
     version.published_at = published_at
