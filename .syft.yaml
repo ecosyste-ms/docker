@@ -27,6 +27,7 @@ catalogers:
   - portage-cataloger
   - python-index-cataloger
   - python-package-cataloger
+  - r-package-cataloger
   - rpm-db-cataloger
   - rpm-file-cataloger
   - ruby-gemfile-cataloger
