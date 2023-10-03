@@ -286,6 +286,8 @@ components:
             type: string
           distro:
             type: string
+          version_url:
+            type: string
           dependencies:
             type: array
             items:
