@@ -20,6 +20,16 @@ class Version < ApplicationRecord
     sbom['distro']['prettyName']
   end
 
+  def syft_version
+    return nil if sbom.nil?
+    sbom['descriptor']['version']
+  end
+
+  def outdated?
+    return false if syft_version.nil?
+    syft_version != package.syft_version
+  end
+
   def parse_sbom_async
     ParseSbomWorker.perform_async(self.id)
   end

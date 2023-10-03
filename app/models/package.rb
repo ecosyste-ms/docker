@@ -82,4 +82,8 @@ class Package < ApplicationRecord
       latest_release_published_at: published_at
     )
   end
+
+  def self.syft_version
+    `syft --version`.strip.split(' ').last
+  end
 end
