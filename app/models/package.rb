@@ -25,6 +25,11 @@ class Package < ApplicationRecord
       repository_url: json["repository_url"],
       last_synced_at: Time.now
     )
+    sync_latest_release
+  end
+
+  def sync_async
+    SyncPackageWorker.perform_async(self.id)
   end
 
   def self.sync_popular
@@ -46,15 +51,13 @@ class Package < ApplicationRecord
         downloads: package["downloads"],
         repository_url: package["repository_url"]
       })
-      p.sync_latest_release rescue nil
+      p.sync rescue nil
     end
     REDIS.set('next_popular_page', page + 1)
   end
 
   def self.resync_outdated
-    Package.order('last_synced_at ASC').limit(100).each do |package|
-      package.sync_latest_release
-    end
+    Package.order('last_synced_at ASC').limit(100).(&:sync_async)
   end
 
   def packages_api_url
