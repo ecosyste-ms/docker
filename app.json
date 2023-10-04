@@ -5,6 +5,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "command": "bundle exec rake packages:resync_outdated",
+      "schedule": "0 * * * *"
+    },
+    {
       "command": "bundle exec rake packages:update_counts",
       "schedule": "0 */2 * * *"
     }
