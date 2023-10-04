@@ -5,6 +5,7 @@ class Package < ApplicationRecord
   has_many :versions, dependent: :delete_all
   has_many :dependencies, dependent: :delete_all
 
+  scope :active, -> { where(status: nil) }
 
   def to_s
     name
@@ -23,7 +24,8 @@ class Package < ApplicationRecord
       description: json["description"],
       downloads: json["downloads"],
       repository_url: json["repository_url"],
-      last_synced_at: Time.now
+      last_synced_at: Time.now,
+      status: json["status"]
     )
     sync_latest_release
   end
