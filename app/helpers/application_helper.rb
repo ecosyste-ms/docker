@@ -31,6 +31,8 @@ module ApplicationHelper
       'pub.dev'
     when 'github'
       'github actions'
+    when 'dart'
+      'pub.dev'
     else
       pkg_type
     end 
