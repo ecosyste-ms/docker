@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_08_23_145213) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_04_105940) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,6 +60,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_08_23_145213) do
     t.string "description"
     t.bigint "downloads"
     t.string "repository_url"
+    t.string "status"
   end
 
   create_table "versions", force: :cascade do |t|
