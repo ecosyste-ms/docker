@@ -14,6 +14,7 @@
   </p>
 
   <% @dependencies.group_by{|d| d.package }.each do |package, dependencies| %>
+    <% next if package.nil? %>
     <% dependency = dependencies.first %>
     
     <div class="card mb-3">
