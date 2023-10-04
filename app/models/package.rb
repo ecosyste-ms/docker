@@ -22,7 +22,8 @@ class Package < ApplicationRecord
       versions_count: versions.count,
       description: json["description"],
       downloads: json["downloads"],
-      repository_url: json["repository_url"]
+      repository_url: json["repository_url"],
+      last_synced_at: Time.now
     )
   end
 
@@ -48,6 +49,12 @@ class Package < ApplicationRecord
       p.sync_latest_release rescue nil
     end
     REDIS.set('next_popular_page', page + 1)
+  end
+
+  def self.resync_outdated
+    Package.order('last_synced_at ASC').limit(100).each do |package|
+      package.sync_latest_release
+    end
   end
 
   def packages_api_url
@@ -82,7 +89,8 @@ class Package < ApplicationRecord
 
     self.update(
       latest_release_number: number,
-      latest_release_published_at: published_at
+      latest_release_published_at: published_at,
+      last_synced_at: Time.now
     )
   end
 

@@ -42,6 +42,7 @@ class Version < ApplicationRecord
     package.update(has_sbom: true, last_synced_at: Time.now, dependencies_count: purls.length)
     save_dependencies
   rescue => e
+    puts e
     json = nil
     update(sbom: json, last_synced_at: Time.now)
   end
