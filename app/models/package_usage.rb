@@ -48,4 +48,28 @@ class PackageUsage < ApplicationRecord
     PackageUsage.create_all
     PackageUsage.all.find_each(&:update_counts)
   end
+
+  def self.ecosystem_to_type(ecosystem)
+    case ecosystem
+    when 'go'
+      'golang'
+    when 'actions'
+      'github'
+    when 'adelie'
+      'apk'
+    when 'alpine'
+      'apk'
+    when 'postmarketos'
+      'apk'
+    when 'packagist'
+      'composer'
+    when 'rubygems'
+      'gem'
+    when 'dart'
+      # temporary as everything should end up as dart eventually
+      'pub'
+    else
+      ecosystem
+    end
+  end
 end
