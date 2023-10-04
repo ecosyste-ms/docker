@@ -7,7 +7,7 @@ class PackageUsagesController < ApplicationController
     # todo redirect to correct ecosystem if different
     @ecosystem = PackageUsage.ecosystem_to_type(params[:ecosystem])
     @scope = PackageUsage.where(ecosystem: @ecosystem).order('dependents_count desc')
-    @pagy, @dependencies = pagy(@scope)
+    @pagy, @dependencies = pagy_countless(@scope)
     raise ActiveRecord::RecordNotFound unless @dependencies.any?
   end
 
@@ -18,6 +18,6 @@ class PackageUsagesController < ApplicationController
     @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
     raise ActiveRecord::RecordNotFound unless @package_usage
     @scope = @package_usage.dependencies.includes(:package)
-    @pagy, @dependencies = pagy(@scope.order('package_id asc'))
+    @pagy, @dependencies = pagy_countless(@scope.order('package_id asc'))
   end
 end

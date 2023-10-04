@@ -11,7 +11,7 @@ class Api::V1::PackagesController < Api::V1::ApplicationController
       scope = scope.order(sort_options)
     end
 
-    @pagy, @packages = pagy(scope)
+    @pagy, @packages = pagy_countless(scope)
   end
 
 

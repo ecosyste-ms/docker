@@ -16,7 +16,7 @@ class Api::V1::PackageUsagesController < Api::V1::ApplicationController
       scope = scope.order(sort_options)
     end
 
-    @pagy, @package_usages = pagy(scope)
+    @pagy, @package_usages = pagy_countless(scope)
     raise ActiveRecord::RecordNotFound unless @package_usages.any?
   end
 
@@ -29,6 +29,6 @@ class Api::V1::PackageUsagesController < Api::V1::ApplicationController
     @ecosystem = params[:ecosystem]
     @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name!(params[:name])
     @scope = @package_usage.dependencies.includes(:package, :version)
-    @pagy, @dependencies = pagy(@scope)
+    @pagy, @dependencies = pagy_countless(@scope)
   end
 end
