@@ -172,6 +172,8 @@ GEM
     nio4r (2.7.0)
     nokogiri (1.16.0-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.16.0-x86_64-linux)
+      racc (~> 1.4)
     numerizer (0.1.1)
     packageurl-ruby (0.1.0)
     pagy (6.4.3)
@@ -309,6 +311,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  x86_64-linux-musl
 
 DEPENDENCIES
   addressable
