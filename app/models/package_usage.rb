@@ -32,7 +32,7 @@ class PackageUsage < ApplicationRecord
       d = Dependency.where(ecosystem: ecosystem, package_name: name).first
       return nil if d.nil?
       pu = PackageUsage.create(ecosystem: ecosystem, name: name)
-      pu.update_counts
+      pu.update_counts if pu.persisted?
     end
     
     pu
