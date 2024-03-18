@@ -7,7 +7,7 @@ class PackageUsage < ApplicationRecord
   end
 
   def to_param
-    name
+    name.gsub(/\s+/, "")
   end
 
   def dependencies
