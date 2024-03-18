@@ -71,7 +71,7 @@ class Package < ApplicationRecord
   end
 
   def latest_release
-    versions.sort_by{|v| [v ? 1 : 0, v.published_at] }.last
+    versions.order('published_at DESC nulls last, created_at desc').first
   end
 
   def sync_latest_release
