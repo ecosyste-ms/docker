@@ -27,6 +27,7 @@ class PackageUsage < ApplicationRecord
   end
 
   def self.find_or_create_by_ecosystem_and_name(ecosystem, name)
+    name.gsub!(/\s+/, "")
     pu = PackageUsage.find_by(ecosystem: ecosystem, name: name)
     if pu.nil?
       d = Dependency.where(ecosystem: ecosystem, package_name: name).first
@@ -40,7 +41,7 @@ class PackageUsage < ApplicationRecord
 
   def self.create_all
     Dependency.select(:ecosystem, :package_name).distinct.each do |d|
-      find_or_create_by_ecosystem_and_name(d.ecosystem, d.package_name)
+      find_or_create_by_ecosystem_and_name(d.ecosystem, d.package_name.gsub(/\s+/, ""))
     end
   end
 
