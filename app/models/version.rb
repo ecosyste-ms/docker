@@ -65,7 +65,7 @@ class Version < ApplicationRecord
           version_id: id,
           package_id: package.id, 
           ecosystem: pkg.type, 
-          package_name: [pkg.namespace,pkg.name].compact.join(pkg.type == 'maven' ? ':' : '/'), 
+          package_name: [pkg.namespace,pkg.name.gsub(/\s+/, "")].compact.join(pkg.type == 'maven' ? ':' : '/'), 
           requirements: pkg.version || '*', 
           purl: purl
         }
