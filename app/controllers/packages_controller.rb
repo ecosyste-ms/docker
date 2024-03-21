@@ -14,6 +14,7 @@ class PackagesController < ApplicationController
 
   def show
     @package = Package.find_by_name(params[:id])
+    raise ActiveRecord::RecordNotFound unless @package
     @pagy, @versions = pagy_countless(@package.versions.order('published_at DESC'))
   end
 end
