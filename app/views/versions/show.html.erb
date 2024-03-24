@@ -53,7 +53,7 @@
               <% dependencies.each do |dependency| %>
                 <% next if dependency.package_name.starts_with?('.')%>
                 <li class="list-group-item">
-                  <%= link_to dependency.package_name, package_usage_path(dependency.ecosystem, dependency.package_name) %>
+                  <%= link_to dependency.package_name, package_usage_path(dependency.ecosystem, dependency) %>
 
                   <small class='text-muted'>
                     <i><%= dependency.requirements %></i>

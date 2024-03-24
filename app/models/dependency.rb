@@ -9,4 +9,8 @@ class Dependency < ApplicationRecord
   def package_url
     PackageURL.parse(purl)
   end
+
+  def to_param
+    package_name.gsub(/\s+/, "")
+  end
 end
