@@ -1,6 +1,7 @@
 class PackageUsagesController < ApplicationController
   def index
     @ecosystems = PackageUsage.group(:ecosystem).count.sort_by { |k, v| v }.reverse
+    expires_in 1.day, public: true
   end
 
   def ecosystem
@@ -9,6 +10,7 @@ class PackageUsagesController < ApplicationController
     @scope = PackageUsage.where(ecosystem: @ecosystem).order('dependents_count desc')
     @pagy, @dependencies = pagy_countless(@scope)
     raise ActiveRecord::RecordNotFound unless @dependencies.any?
+    fresh_when(@dependencies, public: true)
   end
 
   def show
@@ -17,7 +19,9 @@ class PackageUsagesController < ApplicationController
     @package_name = params[:id]
     @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
     raise ActiveRecord::RecordNotFound unless @package_usage
+    fresh_when(@package_usage, public: true)
     @scope = @package_usage.dependencies.includes(:package)
     @pagy, @dependencies = pagy_countless(@scope.order('package_id asc'))
+
   end
 end
