@@ -21,8 +21,8 @@ Rails.application.routes.draw do
 
       get '/usage', to: 'package_usages#index', as: 'package_usages'
       get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
-      get 'usage/:ecosystem/:name/dependencies', to: 'package_usages#dependencies', as: :package_usage_dependencies, constraints: { name: /.*/ }
-      get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage'
+      get 'usage/:ecosystem/:name/dependencies', to: 'package_usages#dependencies', as: :package_usage_dependencies, constraints: { name: /.*/ }, defaults: { format: :json }
+      get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage', defaults: { format: :json }
       
 
     end
@@ -30,7 +30,7 @@ Rails.application.routes.draw do
 
   get '/usage', to: 'package_usages#index', as: 'package_usages'
   get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
-  get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage'
+  get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage', :defaults => {:format => :html}
 
   resources :packages, only: [:index, :show], constraints: { id: /.*/ }, :defaults => {:format => :html} do
     resources :versions, only: [:index, :show]
