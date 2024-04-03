@@ -23,8 +23,6 @@ Rails.application.routes.draw do
       get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
       get 'usage/:ecosystem/:name/dependencies', to: 'package_usages#dependencies', as: :package_usage_dependencies, constraints: { name: /.*/ }, defaults: { format: :json }
       get '/usage/:ecosystem/:id', to: 'package_usages#show', constraints: { id: /.*/ }, as: 'package_usage', defaults: { format: :json }
-      
-
     end
   end
 
