@@ -1,6 +1,15 @@
 class PackageUsagesController < ApplicationController
   def index
     @ecosystems = PackageUsage.group(:ecosystem).count.sort_by { |k, v| v }.reverse
+
+    @ecosystems = @ecosystems.map do |ecosystem, count|
+      {
+        ecosystem: ecosystem,
+        count: count,
+        downloads: PackageUsage.where(ecosystem: ecosystem).sum(:downloads_count)
+      }
+    end
+
     expires_in 1.day, public: true
   end
 
