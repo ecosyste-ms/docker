@@ -320,6 +320,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  arm64-darwin-23
   x86_64-linux
   x86_64-linux-musl
 
@@ -366,7 +367,7 @@ DEPENDENCIES
   webmock
 
 RUBY VERSION
-   ruby 3.3.1p31
+   ruby 3.3.3p31
 
 BUNDLED WITH
    2.5.14
