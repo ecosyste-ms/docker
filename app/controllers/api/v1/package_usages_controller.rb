@@ -33,6 +33,5 @@ class Api::V1::PackageUsagesController < Api::V1::ApplicationController
     @package_usage = PackageUsage.where(ecosystem: @ecosystem).find_by_name!(params[:name])
     @scope = @package_usage.dependencies.includes(:package, :version)
     @pagy, @dependencies = pagy_countless(@scope)
-    fresh_when(@dependencies, public: true)
   end
 end
