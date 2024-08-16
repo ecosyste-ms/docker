@@ -1,7 +1,12 @@
 <% @meta_title = "#{@ecosystem} | Package Usage" %>
+<% @meta_description = "Explore the latest package usage data for #{@ecosystem}, including detailed information on package dependencies and their usage." %>
 
 <div class="container-sm">
   <h1><%= link_to 'Package Usage', package_usages_path %> : <%= @ecosystem %> </h1>
+
+  <p class='lead'>
+    Explore the latest package usage data for <%= @ecosystem %>, including detailed information on package dependencies and their usage.
+  </p>
 
   <p>
     <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}", target: :_blank %>

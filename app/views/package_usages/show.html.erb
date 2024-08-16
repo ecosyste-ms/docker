@@ -1,7 +1,12 @@
 <% @meta_title = "#{@package_name} | #{@ecosystem} | Package Usage" %>
+<% @meta_description = "Explore the latest package usage data for #{@package_name} in the #{@ecosystem} ecosystem, including detailed information on package dependencies and their usage." %>
 
 <div class="container-sm">
   <h1><%= link_to 'Package Usage', package_usages_path %> : <%= link_to @ecosystem, ecosystem_package_usages_path(@ecosystem) %> : <%= @package_name %></h1>
+
+  <p class='lead'>
+    Explore the latest package usage data for <%= @package_name %> in the <%= @ecosystem %> ecosystem, including detailed information on package dependencies and their usage.
+  </p>
 
   <p>
   Total dependents: <%= number_with_delimiter @package_usage.dependents_count %><br>
