@@ -6,7 +6,7 @@ namespace :packages do
 
   desc "update usage counts"
   task update_counts: :environment do
-    PackageUsage.update_all_counts
+    # PackageUsage.update_all_counts
   end
 
   desc 'resync outdated packages'
