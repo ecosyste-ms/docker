@@ -2,7 +2,7 @@ class PackagesController < ApplicationController
   def index
     scope = Package.where(has_sbom: true)
     
-    sort = params[:sort].presence || 'last_synced_at'
+    sort = params[:sort].presence || 'latest_release_published_at'
     if params[:order] == 'asc'
       scope = scope.order(Arel.sql(sort).asc.nulls_last)
     else
