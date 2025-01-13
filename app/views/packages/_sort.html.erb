@@ -5,6 +5,7 @@
     </button>
     <ul class="dropdown-menu">
       <li><a class="dropdown-item <%= 'active' if params[:sort] == 'name' %>" href="<%= url_for(sort: 'name', order: 'asc') %>">Name</a></li>
+      <li><a class="dropdown-item <%= 'active' if params[:sort] == 'last_synced_at' %>" href="<%= url_for(sort: 'last_synced_at', order: 'asc') %>">Last Synced</a></li>
       <li><a class="dropdown-item <%= 'active' if params[:sort] == 'latest_release_published_at' %>" href="<%= url_for(sort: 'latest_release_published_at', order: 'desc') %>">Latest Release</a></li>
       <li><a class="dropdown-item <%= 'active' if params[:sort] == 'dependencies_count' %>" href="<%= url_for(sort: 'dependencies_count', order: 'desc') %>">Dependencies</a></li>
       <li><a class="dropdown-item <%= 'active' if params[:sort] == 'downloads' %>" href="<%= url_for(sort: 'downloads', order: 'desc') %>">Downloads</a></li>
