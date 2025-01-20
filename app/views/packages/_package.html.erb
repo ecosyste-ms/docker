@@ -18,10 +18,6 @@
         <span title="<%= package.latest_release_published_at %>">Latest release: <%= time_ago_in_words package.latest_release_published_at %> ago</span>
       <% end %>
 
-      <% if package.last_synced_at %>
-        <span title="<%= package.last_synced_at %>">Latest release: <%= time_ago_in_words package.last_synced_at %> ago</span>
-      <% end %>
-
       <% if package.versions_count && package.versions_count > 0 %>
         - <%= pluralize number_with_delimiter(package.versions_count), 'release' %>
       <% end %>
@@ -32,6 +28,10 @@
 
       <% if package.dependencies_count %>
         - <%= number_with_delimiter package.dependencies_count %> dependencies
+      <% end %>
+
+      <% if package.last_synced_at %>
+        <span title="<%= package.last_synced_at %>">Last Synced: <%= time_ago_in_words package.last_synced_at %> ago</span>
       <% end %>
     </small>
   </div>
