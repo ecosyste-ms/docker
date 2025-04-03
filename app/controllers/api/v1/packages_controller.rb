@@ -11,6 +11,11 @@ class Api::V1::PackagesController < Api::V1::ApplicationController
       scope = scope.order(sort_options)
     end
 
+    if params[:query].present?
+      query = "%#{params[:query].downcase}%"
+      scope = scope.where('LOWER(name) LIKE ? OR LOWER(description) LIKE ?', query, query)
+    end
+
     @pagy, @packages = pagy_countless(scope)
     fresh_when(@packages, public: true)
   end
