@@ -12,7 +12,7 @@ class Api::V1::PackagesController < Api::V1::ApplicationController
     end
 
     if params[:query].present?
-      query = "%#{params[:query].downcase}%"
+      query = "%#{params[:query].strip.downcase}%"
       scope = scope.where('LOWER(name) LIKE ? OR LOWER(description) LIKE ?', query, query)
     end
 
