@@ -18,7 +18,9 @@ class Api::V1::VersionsController < Api::V1::ApplicationController
   def show
     @package = Package.find_by_name(params[:package_id])
     @package = Package.find_by_name!(params[:package_id].downcase) if @package.nil?
+    raise ActiveRecord::RecordNotFound unless @package
     @version = @package.versions.find_by_number!(params[:id])
+    raise ActiveRecord::RecordNotFound unless @version
     fresh_when(@version, public: true)
   end
 end
