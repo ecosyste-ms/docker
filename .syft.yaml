@@ -1,11 +1,8 @@
 catalogers:
   - alpm-db-cataloger
-  - apkdb-cataloger
-  - binary-cataloger
   - cargo-auditable-binary-cataloger
   - cocoapods-cataloger
   - conan-cataloger
-  - dartlang-lock-cataloger
   - dotnet-deps-cataloger
   - dpkg-db-cataloger
   - elixir-mix-lock-cataloger
@@ -15,7 +12,6 @@ catalogers:
   - go-module-binary-cataloger
   - graalvm-native-image-cataloger
   - haskell-cataloger
-  - java-cataloger
   - java-gradle-lockfile-cataloger
   - java-pom-cataloger
   - javascript-lock-cataloger
@@ -25,7 +21,6 @@ catalogers:
   - php-composer-installed-cataloger
   - php-composer-lock-cataloger
   - portage-cataloger
-  - python-index-cataloger
   - python-package-cataloger
   - r-package-cataloger
   - rpm-db-cataloger
@@ -34,4 +29,3 @@ catalogers:
   - ruby-installed-gemspec-cataloger
   - rust-cargo-lock-cataloger
   - sbom-cataloger
-  - spm-cataloger
