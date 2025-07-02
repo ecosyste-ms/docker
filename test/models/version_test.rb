@@ -1,4 +1,5 @@
 require "test_helper"
+require 'open3'
 
 class VersionTest < ActiveSupport::TestCase
   context 'associations' do
@@ -168,7 +169,9 @@ class VersionTest < ActiveSupport::TestCase
 
       context 'when syft command succeeds' do
         setup do
-          @version.expects(:`).with("syft test/package:1.0.0 --quiet --output syft-json").returns(@syft_output)
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          Open3.expects(:capture2).with('syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
         end
 
         should 'create sbom_record and update last_synced_at' do
@@ -200,10 +203,33 @@ class VersionTest < ActiveSupport::TestCase
           @version.parse_sbom
         end
       end
+      
+      context 'with potentially dangerous package names' do
+        setup do
+          @dangerous_package = Package.create!(name: 'test/package"; echo "pwned')
+          @dangerous_version = Version.create!(package: @dangerous_package, number: '1.0.0"; rm -rf /')
+          
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          
+          # With Open3.capture2, the dangerous characters are passed as-is without shell interpretation
+          image_name = 'test/package"; echo "pwned:1.0.0"; rm -rf /'
+          Open3.expects(:capture2).with('syft', image_name, '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
+        end
+        
+        should 'safely handle dangerous characters without shell interpretation' do
+          @dangerous_version.parse_sbom
+          # The dangerous characters are passed as a single argument to syft,
+          # not interpreted by the shell, making this approach inherently safe
+        end
+      end
 
       context 'when syft command fails' do
         setup do
-          @version.expects(:`).raises(StandardError.new('Command failed'))
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(false)
+          status_mock.stubs(:exitstatus).returns(1)
+          Open3.expects(:capture2).with('syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns(['', status_mock])
         end
 
         should 'handle error and keep existing sbom data' do
@@ -543,7 +569,9 @@ class VersionTest < ActiveSupport::TestCase
         end
         
         should 'create sbom_record and clear old column when successful' do
-          @version2.expects(:`).with("syft test/package:4.0.0 --quiet --output syft-json").returns(@syft_output)
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          Open3.expects(:capture2).with('syft', 'test/package:4.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
           
           assert_difference 'Sbom.count', 1 do
             @version2.parse_sbom
@@ -574,7 +602,9 @@ class VersionTest < ActiveSupport::TestCase
           @version2.create_sbom_record!(data: { 'old' => 'data' })
           @version2.update!(sbom: { 'old' => 'sbom_data' }) # Has old data
           
-          @version2.expects(:`).with("syft test/package:4.0.0 --quiet --output syft-json").returns(@syft_output)
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          Open3.expects(:capture2).with('syft', 'test/package:4.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
           
           assert_no_difference 'Sbom.count' do
             @version2.parse_sbom
@@ -586,7 +616,9 @@ class VersionTest < ActiveSupport::TestCase
         end
         
         should 'fall back to old column if sbom_record creation fails' do
-          @version2.expects(:`).with("syft test/package:4.0.0 --quiet --output syft-json").returns(@syft_output)
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          Open3.expects(:capture2).with('syft', 'test/package:4.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
           
           # Make sbom_record creation fail
           @version2.stubs(:create_sbom_record!).raises(StandardError.new('DB error'))

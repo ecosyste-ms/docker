@@ -71,8 +71,14 @@ class Version < ApplicationRecord
   end
 
   def parse_sbom
-    results = `syft #{self.package.name}:#{self.number} --quiet --output syft-json`
-    json = JSON.parse(results)
+    # Use Open3.capture2 for secure command execution without shell interpretation
+    require 'open3'
+    image_name = "#{self.package.name}:#{self.number}"
+    
+    stdout, status = Open3.capture2('syft', image_name, '--quiet', '--output', 'syft-json')
+    raise "Syft command failed with status #{status.exitstatus}" unless status.success?
+    
+    json = JSON.parse(stdout)
     
     transaction do
       # Always update cached fields (added in migration)
