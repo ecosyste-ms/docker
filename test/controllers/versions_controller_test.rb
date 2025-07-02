@@ -70,16 +70,14 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
       assert_includes assigns(:version).dependencies, dependency
     end
     
-    should "raise 404 for non-existent package" do
-      assert_raises(ActiveRecord::RecordNotFound) do
-        get package_version_path('non-existent', '1.0.0')
-      end
+    should "return 404 for non-existent package" do
+      get package_version_path('non-existent', '1.0.0')
+      assert_response :not_found
     end
     
-    should "raise 404 for non-existent version" do
-      assert_raises(ActiveRecord::RecordNotFound) do
-        get package_version_path(@package.name, 'non-existent')
-      end
+    should "return 404 for non-existent version" do
+      get package_version_path(@package.name, 'non-existent')
+      assert_response :not_found
     end
     
     should "handle package names with special characters" do
