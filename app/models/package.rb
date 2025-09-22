@@ -16,7 +16,9 @@ class Package < ApplicationRecord
   end
 
   def sync
-    response = Faraday.get(packages_api_url)
+    response = Faraday.get(packages_api_url) do |req|
+      req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
+    end
     return unless response.success?
     json = JSON.parse(response.body)
     self.update(
@@ -37,7 +39,9 @@ class Package < ApplicationRecord
   def self.sync_popular
     page = (REDIS.get('next_popular_page') || 1).to_i
     url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=50&page=#{page}"
-    response = Faraday.get(url)
+    response = Faraday.get(url) do |req|
+      req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
+    end
     return unless response.success?
     json = JSON.parse(response.body)
     json.each do |package|
@@ -75,7 +79,9 @@ class Package < ApplicationRecord
   end
 
   def sync_latest_release
-    response = Faraday.get(packages_api_url)
+    response = Faraday.get(packages_api_url) do |req|
+      req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
+    end
     return unless response.success?
     json = JSON.parse(response.body)
 
