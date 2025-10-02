@@ -18,7 +18,11 @@ RUN apk add --update \
     libc6-compat \
     yaml-dev \
     libffi-dev \
- && rm -rf /var/cache/apk/* 
+    jemalloc \
+ && rm -rf /var/cache/apk/*
+
+ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
+ENV RUBY_YJIT_ENABLE=1 
 
 RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
