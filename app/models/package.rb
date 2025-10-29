@@ -6,6 +6,8 @@ class Package < ApplicationRecord
   has_many :dependencies, dependent: :delete_all
 
   scope :active, -> { where(status: nil) }
+  scope :created_after, ->(time) { where('created_at >= ?', time) }
+  scope :updated_after, ->(time) { where('updated_at >= ?', time) }
 
   def to_s
     name
