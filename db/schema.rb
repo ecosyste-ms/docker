@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_02_150940) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_04_180207) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_02_150940) do
     t.index ["package_id"], name: "index_dependencies_on_package_id"
     t.index ["package_name"], name: "index_dependencies_on_package_name"
     t.index ["version_id"], name: "index_dependencies_on_version_id"
+  end
+
+  create_table "distros", force: :cascade do |t|
+    t.string "id_field"
+    t.string "name"
+    t.string "version_id"
+    t.string "pretty_name"
+    t.string "version_codename"
+    t.string "variant"
+    t.string "variant_id"
+    t.string "home_url"
+    t.string "support_url"
+    t.string "bug_report_url"
+    t.string "documentation_url"
+    t.string "logo"
+    t.string "ansi_color"
+    t.string "cpe_name"
+    t.string "build_id"
+    t.string "image_id"
+    t.string "image_version"
+    t.text "raw_content"
+    t.string "slug"
+    t.integer "versions_count", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "id_like"
+    t.index ["id_field"], name: "index_distros_on_id_field"
+    t.index ["id_like"], name: "index_distros_on_id_like"
+    t.index ["pretty_name"], name: "index_distros_on_pretty_name"
+    t.index ["slug"], name: "index_distros_on_slug", unique: true
+    t.index ["versions_count"], name: "index_distros_on_versions_count"
   end
 
   create_table "exports", force: :cascade do |t|

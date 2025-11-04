@@ -1,0 +1,84 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">
+      <%= distros.first.name || grouping_key.titleize %>
+      <% if distros.first.id_field.present? %>
+        <small class='text-muted'>
+          (<%= distros.first.id_field %>)
+        </small>
+      <% end %>
+    </h5>
+
+    <% if distros.first.home_url.present? %>
+      <p class="card-text">
+        <%= link_to distros.first.home_url, distros.first.home_url, target: '_blank', rel: 'noopener noreferrer' %>
+      </p>
+    <% end %>
+
+    <p class="card-text">
+      <strong>Versions:</strong>
+      <span class='text-muted'><%= pluralize distros.count, 'version' %></span>
+      <% total_images = distros.sum(&:versions_count) %>
+      <% if total_images > 0 %>
+        - <span class='text-muted'><%= pluralize number_with_delimiter(total_images), 'Docker image' %></span>
+      <% end %>
+    </p>
+
+    <%
+      visible_limit = 10
+      visible_distros = distros.take(visible_limit)
+      hidden_distros = distros.drop(visible_limit)
+      group_id = "distro-group-#{grouping_key.parameterize}"
+    %>
+
+    <ul class="list-unstyled mb-0 small">
+      <% visible_distros.each do |distro| %>
+        <li class="mb-1">
+          <%
+            # Show version_id if present, otherwise pretty_name
+            display_text = distro.version_id.presence || distro.pretty_name
+
+            # Add variant, codename, or build_id for additional context if available
+            if distro.variant.present?
+              display_text = "#{display_text} (#{distro.variant})"
+            elsif distro.version_codename.present?
+              display_text = "#{display_text} (#{distro.version_codename})"
+            elsif distro.build_id.present? && distro.build_id != distro.version_id
+              display_text = "#{display_text} - #{distro.build_id}"
+            end
+          %>
+          <%= link_to display_text, distro_path(distro.slug) %>
+        </li>
+      <% end %>
+
+      <% if hidden_distros.any? %>
+        <div id="<%= group_id %>-hidden" class="collapse">
+          <% hidden_distros.each do |distro| %>
+            <li class="mb-1">
+              <%
+                # Show version_id if present, otherwise pretty_name
+                display_text = distro.version_id.presence || distro.pretty_name
+
+                # Add variant, codename, or build_id for additional context if available
+                if distro.variant.present?
+                  display_text = "#{display_text} (#{distro.variant})"
+                elsif distro.version_codename.present?
+                  display_text = "#{display_text} (#{distro.version_codename})"
+                elsif distro.build_id.present? && distro.build_id != distro.version_id
+                  display_text = "#{display_text} - #{distro.build_id}"
+                end
+              %>
+              <%= link_to display_text, distro_path(distro.slug) %>
+            </li>
+          <% end %>
+        </div>
+      <% end %>
+    </ul>
+
+    <% if hidden_distros.any? %>
+      <button class="btn btn-sm btn-link ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#<%= group_id %>-hidden" aria-expanded="false">
+        Show <%= hidden_distros.count %> more...
+      </button>
+    <% end %>
+  </div>
+</div>

@@ -9,15 +9,11 @@
   <p><%= @package.description %></p>
 
   <p>
-    <%= @version.distro %>
-  </p>
-
-  <p>
     <small class='text-muted'>
       <% if @package.latest_release_published_at %>
         <span title="<%= @package.latest_release_published_at %>">Latest release: <%= time_ago_in_words @package.latest_release_published_at %> ago</span>
       <% end %>
-      
+
       <% if @package.downloads %>
         - <%= number_with_delimiter @package.downloads %> downloads
       <% end %>
@@ -30,41 +26,76 @@
 
   <%= link_to 'JSON', api_v1_package_version_url(@package, @version)%>
 
-  <% if @version.dependencies.any? %>
-    <h2>Dependencies</h2>
-    
-      <% groups = @version.dependencies.group_by{|d| d.ecosystem} %>
+  <div class="row my-4">
+    <div class="col-md-8">
+      <% if @version.dependencies.any? %>
+        <h2>Dependencies</h2>
 
-      <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <% groups.each_with_index do |group,index| %>
-          <% ecosystem, dependencies = group %>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link <%= 'active' if index.zero? %>" id="<%= ecosystem %>-tab" data-bs-toggle="tab" data-bs-target="#<%= ecosystem %>" type="button" role="tab" aria-controls="<%= ecosystem %>" aria-selected="true">
-            <%= ecosystem %>
-              <span class="ms-2 badge bg-primary rounded-pill"><%= number_with_delimiter dependencies.length%></span>
-            </button>
-          </li>
-        <% end %>
-      </ul>
+          <% groups = @version.dependencies.group_by{|d| d.ecosystem} %>
 
-      <div class="tab-content" id="myTabContent">
-        <% groups.each_with_index do |group,index| %>
-          <% ecosystem, dependencies = group %>
-          <div class="tab-pane fade show <%= 'active' if index.zero? %>" id="<%= ecosystem %>" role="tabpanel" aria-labelledby="<%= ecosystem %>-tab">           
-            <ul class="list-group list-group-flush">
-              <% dependencies.each do |dependency| %>
-                <% next if dependency.package_name.starts_with?('.')%>
-                <li class="list-group-item">
-                  <%= link_to dependency.package_name, package_usage_path(dependency.ecosystem, dependency) %>
+          <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <% groups.each_with_index do |group,index| %>
+              <% ecosystem, dependencies = group %>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link <%= 'active' if index.zero? %>" id="<%= ecosystem %>-tab" data-bs-toggle="tab" data-bs-target="#<%= ecosystem %>" type="button" role="tab" aria-controls="<%= ecosystem %>" aria-selected="true">
+                <%= ecosystem %>
+                  <span class="ms-2 badge bg-primary rounded-pill"><%= number_with_delimiter dependencies.length%></span>
+                </button>
+              </li>
+            <% end %>
+          </ul>
 
-                  <small class='text-muted'>
-                    <i><%= dependency.requirements %></i>
-                  </small>
-                </li>
-              <% end %>
-            </ul>
-          </div>
+          <div class="tab-content" id="myTabContent">
+            <% groups.each_with_index do |group,index| %>
+              <% ecosystem, dependencies = group %>
+              <div class="tab-pane fade show <%= 'active' if index.zero? %>" id="<%= ecosystem %>" role="tabpanel" aria-labelledby="<%= ecosystem %>-tab">
+                <ul class="list-group list-group-flush">
+                  <% dependencies.each do |dependency| %>
+                    <% next if dependency.package_name.starts_with?('.')%>
+                    <li class="list-group-item">
+                      <%= link_to dependency.package_name, package_usage_path(dependency.ecosystem, dependency) %>
+
+                      <small class='text-muted'>
+                        <i><%= dependency.requirements %></i>
+                      </small>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+          <% end %>
+        </div>
       <% end %>
     </div>
-  <% end %>
+
+    <div class="col-md-4">
+      <% distro_data = @version.distro_data %>
+      <% if distro_data.present? %>
+        <h3>Distribution Information</h3>
+        <% distro_record = @version.distro_record %>
+        <% if distro_record.present? %>
+          <p>
+            <%= link_to distro_data['prettyName'], distro_path(distro_record.slug), class: 'btn btn-sm btn-outline-primary' %>
+          </p>
+        <% end %>
+
+        <dl>
+          <% distro_data.each do |key, value| %>
+            <% next if value.blank? %>
+            <dt><%= key.titleize %></dt>
+            <dd><code><%= value %></code></dd>
+          <% end %>
+        </dl>
+      <% elsif @version.distro.present? %>
+        <h3>Distribution</h3>
+        <p>
+          <% distro_record = @version.distro_record %>
+          <% if distro_record.present? %>
+            <%= link_to @version.distro, distro_path(distro_record.slug), class: 'btn btn-sm btn-outline-primary' %>
+          <% else %>
+            <%= @version.distro %>
+          <% end %>
+        </p>
+      <% end %>
+    </div>
+  </div>
 </div>

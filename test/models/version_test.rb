@@ -69,6 +69,50 @@ class VersionTest < ActiveSupport::TestCase
       end
     end
 
+    context '#distro_record' do
+      should 'find distro by distro_name' do
+        @version.update!(distro_name: 'Ubuntu 22.04.1 LTS')
+        distro = Distro.create!(pretty_name: 'Ubuntu 22.04.1 LTS')
+
+        assert_equal distro, @version.distro_record
+      end
+
+      should 'return nil when distro_name is blank' do
+        @version.update!(distro_name: nil)
+
+        assert_nil @version.distro_record
+      end
+
+      should 'return nil when distro not found' do
+        @version.update!(distro_name: 'Non-existent Distro')
+
+        assert_nil @version.distro_record
+      end
+    end
+
+    context '#distro_data' do
+      should 'return distro object from sbom_data' do
+        sbom_data = {
+          'distro' => {
+            'id' => 'ubuntu',
+            'name' => 'Ubuntu',
+            'prettyName' => 'Ubuntu 22.04.1 LTS',
+            'version' => '22.04'
+          }
+        }
+        @version.create_sbom_record!(data: sbom_data)
+
+        result = @version.distro_data
+        assert_equal 'ubuntu', result['id']
+        assert_equal 'Ubuntu', result['name']
+        assert_equal 'Ubuntu 22.04.1 LTS', result['prettyName']
+      end
+
+      should 'return nil when no sbom_data' do
+        assert_nil @version.distro_data
+      end
+    end
+
     context 'SBOM related methods' do
       context 'when sbom is nil' do
         setup do

@@ -121,11 +121,30 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
           syft_version: 'v0.70.0',
           artifacts_count: 1
         )
-        
+
         get package_version_path(@package.name, @version.number)
-        
+
         assert_response :success
         assert @version.has_sbom?
+      end
+
+      should "link to distro page when distro exists" do
+        @version.update!(distro_name: 'Ubuntu 22.04.1 LTS')
+        distro = Distro.create!(pretty_name: 'Ubuntu 22.04.1 LTS')
+
+        get package_version_path(@package.name, @version.number)
+
+        assert_response :success
+        assert_includes response.body, distro_path(distro.slug)
+      end
+
+      should "display distro name without link when distro not found" do
+        @version.update!(distro_name: 'Unknown Distro')
+
+        get package_version_path(@package.name, @version.number)
+
+        assert_response :success
+        assert_includes response.body, 'Unknown Distro'
       end
     end
   end

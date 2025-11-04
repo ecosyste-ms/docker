@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id_field: MyString
+  name: MyString
+  version_id: MyString
+  pretty_name: MyString
+  home_url: MyString
+  support_url: MyString
+  bug_report_url: MyString
+  version_codename: MyString
+  slug: MyString
+
+two:
+  id_field: MyString
+  name: MyString
+  version_id: MyString
+  pretty_name: MyString
+  home_url: MyString
+  support_url: MyString
+  bug_report_url: MyString
+  version_codename: MyString
+  slug: MyString

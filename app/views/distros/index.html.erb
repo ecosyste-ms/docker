@@ -1,0 +1,21 @@
+<div class="container-sm">
+  <h1 class='my-4'>
+    Linux Distributions
+    <small class='text-muted'>
+      <%= number_with_delimiter @distro_groups.values.flatten.count + @ungrouped_distros.count %>
+    </small>
+  </h1>
+
+  <p class='lead'>
+    Browse Linux distributions and their versions, sourced from the <a href="https://github.com/which-distro/os-release" target="_blank" rel="noopener noreferrer">which-distro/os-release</a> repository.
+  </p>
+
+  <% @distro_groups.each do |grouping_key, distros| %>
+    <%= render partial: 'distro_group', locals: { grouping_key: grouping_key, distros: distros } %>
+  <% end %>
+
+  <% if @ungrouped_distros.any? %>
+    <h3 class='mt-4'>Other Distributions</h3>
+    <%= render @ungrouped_distros %>
+  <% end %>
+</div>

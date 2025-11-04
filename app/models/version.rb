@@ -31,10 +31,20 @@ class Version < ApplicationRecord
   def distro
     # Try cached field first (available after migration starts)
     return distro_name if distro_name.present?
-    
+
     # Fall back to JSON column (remove this after migration)
     return nil if sbom.nil?
     sbom['distro']['prettyName']
+  end
+
+  def distro_record
+    return nil unless distro_name.present?
+    Distro.find_by(pretty_name: distro_name)
+  end
+
+  def distro_data
+    return nil unless sbom_data.present?
+    sbom_data.dig('distro')
   end
 
   def syft_version
@@ -172,11 +182,6 @@ class Version < ApplicationRecord
 
     Dependency.insert_all(deps)
   end
-  
-  # ==========================================
-  # TODO: Remove all methods below after SBOM migration is complete
-  # These are temporary methods for the migration process
-  # ==========================================
 
   def migrate_sbom_to_table
     return false unless sbom.present? && sbom_record.blank?

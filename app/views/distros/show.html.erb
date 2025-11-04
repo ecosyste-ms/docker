@@ -1,0 +1,151 @@
+<% @meta_title = "#{@distro.pretty_name}" %>
+<% @meta_description = "#{@distro.pretty_name} Linux distribution information from /etc/os-release" %>
+
+<div class="container-sm">
+  <h1>
+    <%= @distro.pretty_name %>
+  </h1>
+
+  <% if @distro.name.present? && @distro.name != @distro.pretty_name %>
+    <p class="lead"><%= @distro.name %></p>
+  <% end %>
+
+  <% if @distro.versions_count > 0 %>
+    <p>
+      <strong><%= pluralize number_with_delimiter(@distro.versions_count), 'Docker image' %></strong> uses this distribution
+    </p>
+  <% end %>
+
+  <div class="row my-4">
+    <div class="col-md-8">
+      <h3>Distribution Information</h3>
+      <dl>
+        <% if @distro.id_field.present? %>
+          <dt>ID</dt>
+          <dd><code><%= @distro.id_field %></code></dd>
+        <% end %>
+
+        <% if @distro.version_id.present? %>
+          <dt>Version ID</dt>
+          <dd><code><%= @distro.version_id %></code></dd>
+        <% end %>
+
+        <% if @distro.version_codename.present? %>
+          <dt>Codename</dt>
+          <dd><%= @distro.version_codename %></dd>
+        <% end %>
+
+        <% if @distro.variant.present? %>
+          <dt>Variant</dt>
+          <dd><%= @distro.variant %></dd>
+        <% end %>
+
+        <% if @distro.variant_id.present? %>
+          <dt>Variant ID</dt>
+          <dd><code><%= @distro.variant_id %></code></dd>
+        <% end %>
+
+        <% if @distro.build_id.present? %>
+          <dt>Build ID</dt>
+          <dd><code><%= @distro.build_id %></code></dd>
+        <% end %>
+
+        <% if @distro.image_id.present? %>
+          <dt>Image ID</dt>
+          <dd><code><%= @distro.image_id %></code></dd>
+        <% end %>
+
+        <% if @distro.image_version.present? %>
+          <dt>Image Version</dt>
+          <dd><%= @distro.image_version %></dd>
+        <% end %>
+
+        <% if @distro.cpe_name.present? %>
+          <dt>CPE Name</dt>
+          <dd><code><%= @distro.cpe_name %></code></dd>
+        <% end %>
+
+        <% if @distro.ansi_color.present? %>
+          <dt>ANSI Color</dt>
+          <dd><code><%= @distro.ansi_color %></code></dd>
+        <% end %>
+      </dl>
+
+      <% if @distro.raw_content.present? %>
+        <h3 class="mt-4">Raw /etc/os-release Content</h3>
+        <pre><code><%= @distro.raw_content %></code></pre>
+      <% end %>
+    </div>
+
+    <div class="col-md-4">
+      <h3>Links</h3>
+      <ul class="list-unstyled">
+        <% if @distro.home_url.present? %>
+          <li><%= link_to 'Home Page', @distro.home_url, target: '_blank', rel: 'noopener noreferrer' %></li>
+        <% end %>
+
+        <% if @distro.documentation_url.present? %>
+          <li><%= link_to 'Documentation', @distro.documentation_url, target: '_blank', rel: 'noopener noreferrer' %></li>
+        <% end %>
+
+        <% if @distro.support_url.present? %>
+          <li><%= link_to 'Support', @distro.support_url, target: '_blank', rel: 'noopener noreferrer' %></li>
+        <% end %>
+
+        <% if @distro.bug_report_url.present? %>
+          <li><%= link_to 'Bug Reports', @distro.bug_report_url, target: '_blank', rel: 'noopener noreferrer' %></li>
+        <% end %>
+      </ul>
+
+      <% docker_image = @distro.likely_docker_image %>
+      <% if docker_image.present? %>
+        <h3 class="mt-4">Docker Hub</h3>
+        <p class="small">
+          Likely official image:<br>
+          <code><%= docker_image[:image] %></code>
+        </p>
+        <p>
+          <%= link_to 'View on Docker Hub', docker_image[:url], target: '_blank', rel: 'noopener noreferrer', class: 'btn btn-sm btn-outline-primary' %>
+        </p>
+        <% package = @distro.likely_package %>
+        <% if package.present? %>
+          <p>
+            <%= link_to "View #{package.name} on this site", package_path(package.name), class: 'btn btn-sm btn-outline-secondary' %>
+          </p>
+        <% end %>
+      <% end %>
+
+      <% related = @distro.related_distros %>
+      <% if @distro.id_like.present? && related.any? %>
+        <h3 class="mt-4">Related Distributions</h3>
+        <p class="text-muted small">This distribution is based on or similar to:</p>
+        <div>
+          <% related.group_by(&:grouping_key).each do |grouping_key, distros| %>
+            <div class="mb-3">
+              <strong><%= distros.first.name || grouping_key.titleize %></strong>
+              <span class="text-muted">(<%= pluralize distros.count, 'version' %>)</span>
+              <ul class="small mb-0 mt-1">
+                <% distros.take(5).each do |related_distro| %>
+                  <li><%= link_to related_distro.pretty_name, distro_path(related_distro.slug) %></li>
+                <% end %>
+                <% if distros.count > 5 %>
+                  <li class="text-muted">... and <%= distros.count - 5 %> more</li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <p>
+    <small class='text-muted'>
+      Last updated: <%= time_ago_in_words @distro.updated_at %> ago
+    </small>
+  </p>
+
+  <p>
+    <%= link_to 'Back to all distros', distros_path, class: 'btn btn-secondary' %>
+  </p>
+</div>

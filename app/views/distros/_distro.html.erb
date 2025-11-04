@@ -1,0 +1,36 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">
+      <%= link_to distro.pretty_name, distro_path(distro.slug) %>
+      <% if distro.version_id.present? %>
+        <small class='text-muted'>
+          <%= distro.version_id %>
+        </small>
+      <% end %>
+    </h5>
+
+    <% if distro.name.present? && distro.name != distro.pretty_name %>
+      <p class="card-text">
+        <%= distro.name %>
+      </p>
+    <% end %>
+
+    <small class='text-muted'>
+      <% if distro.id_field.present? %>
+        ID: <%= distro.id_field %>
+      <% end %>
+
+      <% if distro.version_codename.present? %>
+        - Codename: <%= distro.version_codename %>
+      <% end %>
+
+      <% if distro.variant.present? %>
+        - Variant: <%= distro.variant %>
+      <% end %>
+
+      <% if distro.updated_at %>
+        <span title="<%= distro.updated_at %>">Last Updated: <%= time_ago_in_words distro.updated_at %> ago</span>
+      <% end %>
+    </small>
+  </div>
+</div>
