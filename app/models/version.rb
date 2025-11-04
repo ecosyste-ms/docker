@@ -180,28 +180,64 @@ class Version < ApplicationRecord
 
   def migrate_sbom_to_table
     return false unless sbom.present? && sbom_record.blank?
-    
+
     transaction do
       # Save the SBOM data before we clear it
       sbom_data = sbom
-      
+
       # Update cached fields
       self.distro_name = sbom_data.dig('distro', 'prettyName')
-      self.syft_version = sbom_data.dig('descriptor', 'version') 
+      self.syft_version = sbom_data.dig('descriptor', 'version')
       self.artifacts_count = extract_purls_from_json(sbom_data).count
-      
+
       # Create new sbom record
       create_sbom_record!(data: sbom_data)
-      
+
       # Clear old column after successful creation
       self.sbom = nil
       save!
-      
+
       true
     end
   rescue => e
     Rails.logger.error "Failed to migrate SBOM for version #{id}: #{e.message}"
     false
+  end
+
+  def backfill_distro_name
+    return false if distro_name.present?
+    return false unless has_sbom?
+
+    data = sbom_data
+    return false if data.nil?
+
+    extracted_name = data.dig('distro', 'prettyName')
+    return false if extracted_name.nil?
+
+    update_column(:distro_name, extracted_name)
+    true
+  rescue => e
+    Rails.logger.error "Failed to backfill distro_name for version #{id}: #{e.message}"
+    false
+  end
+
+  def self.backfill_all_distro_names
+    needing_backfill = where(distro_name: nil)
+      .left_joins(:sbom_record)
+      .where('versions.sbom IS NOT NULL OR sboms.id IS NOT NULL')
+
+    total = needing_backfill.count
+    success_count = 0
+
+    needing_backfill.find_each do |version|
+      success_count += 1 if version.backfill_distro_name
+    end
+
+    {
+      total: total,
+      backfilled: success_count,
+      failed: total - success_count
+    }
   end
     
   def self.sbom_migration_stats
