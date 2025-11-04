@@ -223,13 +223,11 @@ class Version < ApplicationRecord
 
   def self.backfill_all_distro_names
     needing_backfill = where(distro_name: nil)
-      .left_joins(:sbom_record)
-      .where('versions.sbom IS NOT NULL OR sboms.id IS NOT NULL')
 
     total = needing_backfill.count
     success_count = 0
 
-    needing_backfill.find_each do |version|
+    needing_backfill.each_instance do |version|
       success_count += 1 if version.backfill_distro_name
     end
 
