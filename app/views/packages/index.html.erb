@@ -1,14 +1,70 @@
 <div class="container-sm">
   <h1 class='my-4'>
     Recently Parsed Docker Images
-    <small class='text-muted'>
-      <%= number_with_delimiter @pagy.count %>
-    </small>
   </h1>
 
   <p class='lead'>
     Access the latest open data releases from the Docker database, featuring detailed information on container images and their usage.
   </p>
+
+  <div class="row mb-4">
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <%= link_to packages_path, class: 'text-decoration-none' do %>
+        <div class="card text-center">
+          <div class="card-body">
+            <h4 class="card-title text-primary mb-1"><%= number_with_delimiter(@stats[:total_packages]) %></h4>
+            <p class="card-text small text-muted mb-0">Docker Images</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title text-success mb-1"><%= number_with_delimiter(@stats[:total_versions]) %></h4>
+          <p class="card-text small text-muted mb-0">Versions</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <%= link_to distros_path, class: 'text-decoration-none' do %>
+        <div class="card text-center">
+          <div class="card-body">
+            <h4 class="card-title text-warning mb-1"><%= number_with_delimiter(@stats[:total_distros]) %></h4>
+            <p class="card-text small text-muted mb-0">Distributions</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <%= link_to package_usages_path, class: 'text-decoration-none' do %>
+        <div class="card text-center">
+          <div class="card-body">
+            <h4 class="card-title text-info mb-1"><%= number_with_delimiter(@stats[:total_dependencies]) %></h4>
+            <p class="card-text small text-muted mb-0">Dependencies</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <%= link_to package_usages_path, class: 'text-decoration-none' do %>
+        <div class="card text-center">
+          <div class="card-body">
+            <h4 class="card-title text-secondary mb-1"><%= number_with_delimiter(@stats[:total_ecosystems]) %></h4>
+            <p class="card-text small text-muted mb-0">Ecosystems</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h4 class="card-title text-black mb-1"><%= number_with_delimiter(@stats[:total_versions]) %></h4>
+          <p class="card-text small text-muted mb-0">SBOMS</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <p>
     <%= link_to 'Browse Linux Distributions', distros_path, class: 'btn btn-outline-primary' %>
@@ -19,5 +75,5 @@
   </ul>
 
   <%= render @packages %>
-  <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
+  <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>
 </div>

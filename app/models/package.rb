@@ -17,7 +17,7 @@ class Package < ApplicationRecord
     name
   end
 
-  def sync
+  def sync(all_versions: false)
     response = Faraday.get(packages_api_url) do |req|
       req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
     end
@@ -31,7 +31,12 @@ class Package < ApplicationRecord
       last_synced_at: Time.now,
       status: json["status"]
     )
-    sync_latest_release
+
+    if all_versions
+      sync_all_versions
+    else
+      sync_latest_release
+    end
   end
 
   def sync_async
@@ -92,7 +97,7 @@ class Package < ApplicationRecord
 
     if latest_release_published_at && published_at && latest_release_published_at == Time.parse(published_at)
       latest_release.parse_sbom_async if latest_release.outdated?
-      return 
+      return
     end
 
     version = versions.find_or_create_by(number: number)
@@ -105,6 +110,33 @@ class Package < ApplicationRecord
       latest_release_published_at: published_at,
       last_synced_at: Time.now
     )
+  end
+
+  def sync_all_versions(limit: 100, parse_sbom: false)
+    page = 1
+
+    loop do
+      url = "#{packages_api_url}/versions?page=#{page}&per_page=#{limit}"
+      response = Faraday.get(url) do |req|
+        req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
+      end
+
+      break unless response.success?
+
+      versions_data = JSON.parse(response.body)
+      break if versions_data.empty?
+
+      versions_data.each do |version_data|
+        version = versions.find_or_initialize_by(number: version_data['number'])
+        version.published_at = version_data['published_at']
+        version.save
+
+        # Only parse SBOM if explicitly requested
+        version.parse_sbom_async if parse_sbom && (version.sbom_data.nil? || version.outdated?)
+      end
+
+      page += 1
+    end
   end
 
   def self.syft_version

@@ -1,7 +1,7 @@
 class PackagesController < ApplicationController
   def index
     scope = Package.where(has_sbom: true)
-    
+
     sort = params[:sort].presence || 'last_synced_at'
     if params[:order] == 'asc'
       scope = scope.order(Arel.sql(sort).asc.nulls_last)
@@ -13,8 +13,21 @@ class PackagesController < ApplicationController
       query = "%#{params[:query].downcase}%"
       scope = scope.where('LOWER(name) LIKE ? OR LOWER(description) LIKE ?', query, query)
     end
-    
+
     @pagy, @packages = pagy_countless(scope)
+
+    # Stats for homepage - cache for 1 day
+    @stats = Rails.cache.fetch('homepage_stats', expires_in: 1.day) do
+      {
+        total_packages: Package.fast_total,
+        total_versions: Version.fast_total,
+        total_distros: Distro.fast_total,
+        total_dependencies: Dependency.fast_total,
+        total_ecosystems: PackageUsage.distinct.count(:ecosystem),
+        total_sboms: Sbom.fast_total
+      }
+    end
+
     fresh_when(@packages, public: true)
   end
 
