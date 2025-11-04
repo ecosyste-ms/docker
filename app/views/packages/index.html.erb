@@ -1,10 +1,10 @@
 <div class="container-sm">
   <h1 class='my-4'>
-    Recently Parsed Docker Images
+    Docker Container Analysis
   </h1>
 
   <p class='lead'>
-    Access the latest open data releases from the Docker database, featuring detailed information on container images and their usage.
+    Discover dependencies, packages, and Linux distributions extracted from hundreds of thousands of public Docker images. Track usage patterns across ecosystems and explore the open source software powering containerized applications.
   </p>
 
   <div class="row mb-4">
@@ -65,10 +65,6 @@
       </div>
     </div>
   </div>
-
-  <p>
-    <%= link_to 'Browse Linux Distributions', distros_path, class: 'btn btn-outline-primary' %>
-  </p>
 
   <ul class="nav nav-tabs my-3">
     <%= render 'sort'%>
