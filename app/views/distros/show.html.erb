@@ -10,12 +10,6 @@
     <p class="lead"><%= @distro.name %></p>
   <% end %>
 
-  <% if @distro.versions_count > 0 %>
-    <p>
-      <strong><%= pluralize number_with_delimiter(@distro.versions_count), 'Docker image' %></strong> uses this distribution
-    </p>
-  <% end %>
-
   <div class="row my-4">
     <div class="col-md-8">
       <h3>Distribution Information</h3>
@@ -78,6 +72,16 @@
     </div>
 
     <div class="col-md-4">
+      <% if @distro.versions_count > 0 %>
+        <div class="mb-4">
+          <h3>Usage</h3>
+          <p>
+            <strong><%= number_with_delimiter(@distro.versions_count) %></strong>
+            <%= 'Docker image'.pluralize(@distro.versions_count) %>
+          </p>
+        </div>
+      <% end %>
+
       <h3>Links</h3>
       <ul class="list-unstyled">
         <% if @distro.home_url.present? %>
