@@ -113,6 +113,43 @@ class Distro < ApplicationRecord
     end
   end
 
+  def self.missing_from_versions
+    # Find distro_names in Version table that don't exist in Distro table
+    Version.where.not(distro_name: [nil, ''])
+           .group(:distro_name)
+           .count
+           .reject { |pretty_name, _count| exists?(pretty_name: pretty_name) }
+           .sort_by { |_name, count| -count }
+  end
+
+  def self.guess_docker_image_from_name(distro_name)
+    # Parse distro name to guess likely Docker Hub image (only Docker Hub, not other registries)
+    name_lower = distro_name.downcase
+
+    # Common patterns for Docker Hub official images
+    patterns = {
+      /^alpine linux v?(\d+\.\d+)/ => ->(m) { "alpine:#{m[1]}" },
+      /^debian gnu\/linux (\d+)/ => ->(m) { "debian:#{m[1]}" },
+      /^ubuntu (\d+\.\d+)/ => ->(m) { "ubuntu:#{m[1]}" },
+      /^fedora.*?(\d+)/ => ->(m) { "fedora:#{m[1]}" },
+      /^centos.*?(\d+)/ => ->(m) { "centos:#{m[1]}" },
+      /^rocky linux (\d+)/ => ->(m) { "rockylinux:#{m[1]}" },
+      /^almalinux (\d+)/ => ->(m) { "almalinux:#{m[1]}" },
+      /^red hat.*?(\d+)/ => ->(m) { "redhat/ubi#{m[1]}" },
+      /^oracle linux.*?(\d+)/ => ->(m) { "oraclelinux:#{m[1]}" },
+      /^amazon linux (\d+)/ => ->(m) { "amazonlinux:#{m[1]}" },
+      /^arch linux/ => ->(m) { "archlinux:latest" }
+    }
+
+    patterns.each do |pattern, builder|
+      if match = name_lower.match(pattern)
+        return builder.call(match)
+      end
+    end
+
+    nil
+  end
+
   def self.sync_from_github
     require 'fileutils'
     require 'tmpdir'

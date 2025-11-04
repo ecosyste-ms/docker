@@ -240,6 +240,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PackageUsage'
+  /distros:
+    get:
+      summary: get a list of Linux distributions
+      operationId: getDistros
+      tags:
+        - distros
+      parameters:
+        - name: page
+          in: query
+          description: pagination page number
+          required: false
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of records to return
+          required: false
+          schema:
+            type: integer
+        - name: created_after
+          in: query
+          description: filter by created_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updated_after
+          in: query
+          description: filter by updated_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: field to order results by
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: direction to order results by
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          description: search query for distro name or id
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Distro'
+  /distros/{slug}:
+    get:
+      summary: get a Linux distribution by slug
+      operationId: getDistro
+      tags:
+        - distros
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          description: slug of distribution
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Distro'
 components:
   schemas:
     Package:
@@ -324,4 +404,59 @@ components:
         package_usage_url:
           type: string
         dependencies_url:
+          type: string
+    Distro:
+      type: object
+      properties:
+        id:
+          type: integer
+        pretty_name:
+          type: string
+        name:
+          type: string
+        id_field:
+          type: string
+        id_like:
+          type: string
+        version_id:
+          type: string
+        version_codename:
+          type: string
+        variant:
+          type: string
+        variant_id:
+          type: string
+        slug:
+          type: string
+        versions_count:
+          type: integer
+        home_url:
+          type: string
+        support_url:
+          type: string
+        bug_report_url:
+          type: string
+        documentation_url:
+          type: string
+        logo:
+          type: string
+        ansi_color:
+          type: string
+        cpe_name:
+          type: string
+        build_id:
+          type: string
+        image_id:
+          type: string
+        image_version:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        url:
+          type: string
+        html_url:
           type: string

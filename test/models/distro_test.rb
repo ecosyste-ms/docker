@@ -465,4 +465,98 @@ class DistroTest < ActiveSupport::TestCase
     result = distro.likely_package
     assert_nil result
   end
+
+  test "missing_from_versions finds distros in versions but not in distros table" do
+    # Create a distro that exists
+    Distro.create!(pretty_name: "Ubuntu 22.04 LTS")
+
+    # Create versions with various distro names
+    package = Package.create!(name: "test/package")
+
+    # This one has matching distro
+    Version.create!(package: package, number: "1.0.0", distro_name: "Ubuntu 22.04 LTS")
+    Version.create!(package: package, number: "1.0.1", distro_name: "Ubuntu 22.04 LTS")
+
+    # These don't have matching distros
+    Version.create!(package: package, number: "2.0.0", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    Version.create!(package: package, number: "2.0.1", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    Version.create!(package: package, number: "2.0.2", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    Version.create!(package: package, number: "3.0.0", distro_name: "Alpine Linux v3.17")
+
+    missing = Distro.missing_from_versions
+
+    # Should return array of [name, count] pairs
+    assert_equal 2, missing.count
+
+    # Convert to hash for easier assertion
+    missing_hash = missing.to_h
+    assert_equal 3, missing_hash["Debian GNU/Linux 12 (bookworm)"]
+    assert_equal 1, missing_hash["Alpine Linux v3.17"]
+
+    # Should be sorted by count descending
+    assert_equal "Debian GNU/Linux 12 (bookworm)", missing.first[0]
+    assert_equal 3, missing.first[1]
+  end
+
+  test "missing_from_versions returns empty when all distros exist" do
+    package = Package.create!(name: "test/package")
+
+    # Create distro
+    Distro.create!(pretty_name: "Ubuntu 22.04 LTS")
+
+    # Create version with matching distro
+    Version.create!(package: package, number: "1.0.0", distro_name: "Ubuntu 22.04 LTS")
+
+    missing = Distro.missing_from_versions
+
+    assert_equal 0, missing.count
+  end
+
+  test "missing_from_versions ignores nil and empty distro_names" do
+    package = Package.create!(name: "test/package")
+
+    # Create versions without distro_name
+    Version.create!(package: package, number: "1.0.0", distro_name: nil)
+    Version.create!(package: package, number: "1.0.1", distro_name: "")
+
+    missing = Distro.missing_from_versions
+
+    assert_equal 0, missing.count
+  end
+
+  test "guess_docker_image_from_name handles Alpine Linux" do
+    assert_equal "alpine:3.20", Distro.guess_docker_image_from_name("Alpine Linux v3.20")
+    assert_equal "alpine:3.17", Distro.guess_docker_image_from_name("Alpine Linux v3.17")
+  end
+
+  test "guess_docker_image_from_name handles Debian" do
+    assert_equal "debian:12", Distro.guess_docker_image_from_name("Debian GNU/Linux 12 (bookworm)")
+    assert_equal "debian:11", Distro.guess_docker_image_from_name("Debian GNU/Linux 11 (bullseye)")
+  end
+
+  test "guess_docker_image_from_name handles Ubuntu" do
+    assert_equal "ubuntu:22.04", Distro.guess_docker_image_from_name("Ubuntu 22.04.1 LTS")
+    assert_equal "ubuntu:20.04", Distro.guess_docker_image_from_name("Ubuntu 20.04 LTS")
+  end
+
+  test "guess_docker_image_from_name handles Fedora" do
+    assert_equal "fedora:40", Distro.guess_docker_image_from_name("Fedora Linux 40")
+    assert_equal "fedora:39", Distro.guess_docker_image_from_name("Fedora CoreOS 39")
+  end
+
+  test "guess_docker_image_from_name returns nil for Distroless (not on Docker Hub)" do
+    assert_nil Distro.guess_docker_image_from_name("Distroless")
+  end
+
+  test "guess_docker_image_from_name handles Oracle Linux" do
+    assert_equal "oraclelinux:8", Distro.guess_docker_image_from_name("Oracle Linux Server 8.5")
+  end
+
+  test "guess_docker_image_from_name handles Red Hat" do
+    assert_equal "redhat/ubi8", Distro.guess_docker_image_from_name("Red Hat Enterprise Linux 8.7 (Ootpa)")
+  end
+
+  test "guess_docker_image_from_name returns nil for unknown pattern" do
+    assert_nil Distro.guess_docker_image_from_name("Custom Unknown Distro 1.0")
+  end
 end

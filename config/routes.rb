@@ -15,9 +15,11 @@ Rails.application.routes.draw do
 
   namespace :api, :defaults => {:format => :json} do
     namespace :v1 do
-      resources :packages, constraints: { id: /.*/ }, only: [:index, :show] do 
+      resources :packages, constraints: { id: /.*/ }, only: [:index, :show] do
         resources :versions, only: [:index, :show], constraints: { id: /.*/ }
       end
+
+      resources :distros, only: [:index, :show]
 
       get '/usage', to: 'package_usages#index', as: 'package_usages'
       get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
