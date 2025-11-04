@@ -1,3 +1,6 @@
+<% @meta_title = "Linux Distributions in Docker Images" %>
+<% @meta_description = "Browse Linux distributions found in public Docker images. Track which distros are most popular in containers, explore versions, and discover related distributions." %>
+
 <div class="container-sm">
   <h1 class='my-4'>
     Linux Distributions
@@ -7,7 +10,7 @@
   </h1>
 
   <p class='lead'>
-    Browse Linux distributions and their versions, sourced from the <a href="https://github.com/which-distro/os-release" target="_blank" rel="noopener noreferrer">which-distro/os-release</a> repository.
+    Browse Linux distributions found in public Docker images, organized by popularity. Distribution data sourced from the <a href="https://github.com/which-distro/os-release" target="_blank" rel="noopener noreferrer">which-distro/os-release</a> repository.
   </p>
 
   <% @distro_groups.each do |grouping_key, distros| %>
