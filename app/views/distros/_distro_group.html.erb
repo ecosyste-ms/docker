@@ -23,6 +23,7 @@
                           distros.first.version_codename.to_s.downcase == 'rolling' ||
                           distros.first.version_id.to_s.include?('TEMPLATE'))
       total_images = distros.sum(&:versions_count)
+      total_downloads = distros.sum { |d| d.total_downloads || 0 }
     %>
 
     <% if is_single_rolling %>
@@ -30,6 +31,9 @@
         <p class="card-text">
           <strong><%= number_with_delimiter(total_images) %></strong>
           <span class='text-muted'><%= 'Docker image'.pluralize(total_images) %></span>
+          <% if total_downloads > 0 %>
+            - <span class='text-muted'><%= number_with_delimiter(total_downloads) %> downloads</span>
+          <% end %>
         </p>
       <% end %>
     <% else %>
@@ -38,6 +42,9 @@
         <span class='text-muted'><%= pluralize distros.count, 'version' %></span>
         <% if total_images > 0 %>
           - <span class='text-muted'><%= pluralize number_with_delimiter(total_images), 'Docker image' %></span>
+        <% end %>
+        <% if total_downloads > 0 %>
+          - <span class='text-muted'><%= number_with_delimiter(total_downloads) %> downloads</span>
         <% end %>
       </p>
     <% end %>

@@ -79,6 +79,12 @@
             <strong><%= number_with_delimiter(@distro.versions_count) %></strong>
             <%= 'Docker image'.pluralize(@distro.versions_count) %>
           </p>
+          <% if @distro.total_downloads && @distro.total_downloads > 0 %>
+            <p>
+              <strong><%= number_with_delimiter(@distro.total_downloads) %></strong>
+              total downloads
+            </p>
+          <% end %>
         </div>
       <% end %>
 
