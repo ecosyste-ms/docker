@@ -227,7 +227,7 @@ class Version < ApplicationRecord
   end
 
   def self.backfill_all_distro_names
-    needing_backfill = where(distro_name: nil)
+    needing_backfill = where(distro_name: nil).includes(:sbom_record)
 
     total = needing_backfill.count
     success_count = 0
