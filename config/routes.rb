@@ -38,7 +38,9 @@ Rails.application.routes.draw do
 
   resources :exports, only: [:index], path: 'open-data'
 
-  resources :distros, only: [:index, :show]
+  resources :distros, only: [:index, :show] do
+    resources :versions, only: [:index]
+  end
 
   get '/404', to: 'errors#not_found'
   get '/422', to: 'errors#unprocessable'

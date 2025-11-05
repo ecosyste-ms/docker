@@ -78,6 +78,7 @@
           <p>
             <strong><%= number_with_delimiter(@distro.versions_count) %></strong>
             <%= 'Docker image'.pluralize(@distro.versions_count) %>
+            - <%= link_to 'View all', distro_versions_path(@distro.slug) %>
           </p>
           <% if @distro.total_downloads && @distro.total_downloads > 0 %>
             <p>

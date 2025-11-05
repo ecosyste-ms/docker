@@ -467,16 +467,16 @@ class VersionTest < ActiveSupport::TestCase
         Version.create!(package: @package, number: 'v2', sbom: {'test' => 'data'})
         Version.create!(package: @package, number: 'v3') # No SBOM
         
-        # One already migrated
-        v4 = Version.create!(package: @package, number: 'v4', sbom: {'test' => 'data'})
+        # One already migrated (sbom_record exists, old sbom cleared)
+        v4 = Version.create!(package: @package, number: 'v4')
         v4.create_sbom_record!(data: {'test' => 'data'})
-        
+
         stats = Version.sbom_migration_stats
-        
+
         assert_equal initial_count + 4, stats[:total_versions]
         assert_equal initial_with_sbom + 3, stats[:total_with_sbom]
         assert_equal initial_migrated + 1, stats[:migrated]
-        assert_equal 2, stats[:to_migrate]
+        assert_equal initial_with_sbom + 2, stats[:to_migrate]
         
         # Calculate expected percentage
         total_with_sbom = initial_with_sbom + 3

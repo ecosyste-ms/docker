@@ -22,10 +22,62 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  context "GET #index for distro" do
+    setup do
+      @distro = create(:distro, :ubuntu, versions_count: 5)
+      @package1 = create(:package, name: 'ubuntu-package-1')
+      @package2 = create(:package, name: 'ubuntu-package-2')
+      @version1 = create(:version, package: @package1, number: '1.0', distro_name: @distro.pretty_name, published_at: 1.day.ago)
+      @version2 = create(:version, package: @package1, number: '2.0', distro_name: @distro.pretty_name, published_at: 2.days.ago)
+      @version3 = create(:version, package: @package2, number: '1.5', distro_name: @distro.pretty_name, published_at: 3.days.ago)
+    end
+
+    should "return successful response" do
+      get distro_versions_path(@distro.slug)
+
+      assert_response :success
+    end
+
+    should "load distro and versions" do
+      get distro_versions_path(@distro.slug)
+
+      assert_equal @distro, assigns(:distro)
+      assert_equal 3, assigns(:versions).count
+    end
+
+    should "order versions by published_at desc" do
+      get distro_versions_path(@distro.slug)
+
+      versions = assigns(:versions)
+      assert_equal @version1, versions[0]
+      assert_equal @version2, versions[1]
+      assert_equal @version3, versions[2]
+    end
+
+    should "include packages to avoid N+1" do
+      get distro_versions_path(@distro.slug)
+
+      assert_response :success
+    end
+
+    should "raise 404 for non-existent distro" do
+      get distro_versions_path('non-existent-distro')
+      assert_response :not_found
+    end
+
+    should "set cache headers" do
+      get distro_versions_path(@distro.slug)
+
+      assert_response :success
+      assert_not_nil response.headers['ETag']
+      assert_not_nil response.headers['Last-Modified']
+    end
+  end
+
   context "GET #show" do
     should "return successful response for existing version" do
       get package_version_path(@package.name, @version.number)
-      
+
       assert_response :success
       assert_equal @package, assigns(:package)
       assert_equal @version, assigns(:version)
