@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_05_125715) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_05_142158) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -130,6 +130,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_125715) do
     t.string "syft_version"
     t.integer "artifacts_count", default: 0
     t.index ["distro_name"], name: "index_versions_on_distro_name"
+    t.index ["package_id", "number"], name: "index_versions_on_package_id_and_number", unique: true
     t.index ["package_id"], name: "index_versions_on_package_id"
     t.index ["syft_version"], name: "index_versions_on_syft_version"
   end

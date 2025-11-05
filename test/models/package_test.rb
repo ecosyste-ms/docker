@@ -96,4 +96,81 @@ class PackageTest < ActiveSupport::TestCase
 
     assert_equal 1, package.versions.count
   end
+
+  test "sync_all_versions updates existing versions" do
+    package = create(:package, name: "test/package")
+    existing_version = create(:version, package: package, number: '1.0.0', published_at: 1.year.ago)
+
+    # Mock API response with updated published_at
+    versions_response = [
+      { 'number' => '1.0.0', 'published_at' => '2024-01-01T00:00:00Z' },
+      { 'number' => '2.0.0', 'published_at' => '2024-02-01T00:00:00Z' }
+    ].to_json
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=1&per_page=100")
+      .to_return(status: 200, body: versions_response)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=2&per_page=100")
+      .to_return(status: 200, body: [].to_json)
+
+    package.sync_all_versions
+
+    assert_equal 2, package.versions.count
+
+    # Check existing version was updated
+    existing_version.reload
+    assert_equal Time.parse('2024-01-01T00:00:00Z'), existing_version.published_at
+
+    # Check new version was created
+    assert package.versions.find_by(number: '2.0.0').present?
+  end
+
+  test "sync_all_versions updates versions_count" do
+    package = create(:package, name: "test/package", versions_count: 0)
+
+    versions_response = [
+      { 'number' => '1.0.0', 'published_at' => '2024-01-01T00:00:00Z' },
+      { 'number' => '2.0.0', 'published_at' => '2024-02-01T00:00:00Z' },
+      { 'number' => '3.0.0', 'published_at' => '2024-03-01T00:00:00Z' }
+    ].to_json
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=1&per_page=100")
+      .to_return(status: 200, body: versions_response)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=2&per_page=100")
+      .to_return(status: 200, body: [].to_json)
+
+    package.sync_all_versions
+
+    package.reload
+    assert_equal 3, package.versions_count
+  end
+
+  test "sync_all_versions handles multiple pages" do
+    package = create(:package, name: "test/package")
+
+    # First page
+    page1_response = (1..100).map do |i|
+      { 'number' => "#{i}.0.0", 'published_at' => '2024-01-01T00:00:00Z' }
+    end.to_json
+
+    # Second page
+    page2_response = (101..150).map do |i|
+      { 'number' => "#{i}.0.0", 'published_at' => '2024-01-01T00:00:00Z' }
+    end.to_json
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=1&per_page=100")
+      .to_return(status: 200, body: page1_response)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=2&per_page=100")
+      .to_return(status: 200, body: page2_response)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages/test/package/versions?page=3&per_page=100")
+      .to_return(status: 200, body: [].to_json)
+
+    package.sync_all_versions
+
+    assert_equal 150, package.versions.count
+    assert_equal 150, package.reload.versions_count
+  end
 end

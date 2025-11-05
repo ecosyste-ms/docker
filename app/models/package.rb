@@ -114,6 +114,7 @@ class Package < ApplicationRecord
 
   def sync_all_versions(limit: 100, parse_sbom: false)
     page = 1
+    version_ids_to_parse = []
 
     loop do
       url = "#{packages_api_url}/versions?page=#{page}&per_page=#{limit}"
@@ -126,16 +127,46 @@ class Package < ApplicationRecord
       versions_data = JSON.parse(response.body)
       break if versions_data.empty?
 
-      versions_data.each do |version_data|
-        version = versions.find_or_initialize_by(number: version_data['number'])
-        version.published_at = version_data['published_at']
-        version.save
+      # Prepare data for upsert
+      now = Time.current
+      version_records = versions_data.map do |version_data|
+        {
+          package_id: id,
+          number: version_data['number'],
+          published_at: version_data['published_at'],
+          created_at: now,
+          updated_at: now
+        }
+      end
 
-        # Only parse SBOM if explicitly requested
-        version.parse_sbom_async if parse_sbom && (version.sbom_data.nil? || version.outdated?)
+      # Upsert all versions in a single query
+      Version.upsert_all(
+        version_records,
+        unique_by: [:package_id, :number],
+        update_only: [:published_at]
+      )
+
+      # If parse_sbom is requested, find versions that need parsing
+      if parse_sbom
+        version_numbers = versions_data.map { |v| v['number'] }
+        versions_needing_sbom = versions.where(number: version_numbers)
+                                        .left_joins(:sbom_record)
+                                        .where('sboms.id IS NULL OR versions.syft_version != ?', Package.syft_version)
+
+        version_ids_to_parse.concat(versions_needing_sbom.pluck(:id))
       end
 
       page += 1
+    end
+
+    # Update versions_count since upsert_all bypasses counter_culture
+    update_column(:versions_count, versions.count)
+
+    # Queue SBOM parsing jobs if requested
+    if parse_sbom && version_ids_to_parse.any?
+      version_ids_to_parse.each do |version_id|
+        ParseSbomWorker.perform_async(version_id)
+      end
     end
   end
 
