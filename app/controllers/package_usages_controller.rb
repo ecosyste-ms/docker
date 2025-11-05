@@ -29,8 +29,6 @@ class PackageUsagesController < ApplicationController
     @package_usage = PackageUsage.find_or_create_by_ecosystem_and_name(@ecosystem, @package_name)
     raise ActiveRecord::RecordNotFound unless @package_usage
     fresh_when(@package_usage, public: true)
-    @scope = @package_usage.dependencies.includes(:package)
-    @pagy, @dependencies = pagy_countless(@scope.order('package_id asc'))
-
+    @dependencies = @package_usage.dependencies.includes(:package).limit(100)
   end
 end

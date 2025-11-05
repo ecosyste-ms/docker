@@ -10,7 +10,9 @@
 
   <p>
   Total dependents: <%= number_with_delimiter @package_usage.dependents_count %><br>
-  Total downloads: <%= number_with_delimiter @package_usage.downloads_count %></p>
+  Total downloads: <%= number_with_delimiter @package_usage.downloads_count %><br>
+  <small class='text-muted'>Showing first 100 dependents</small>
+  </p>
 
   <p>
     <%= link_to 'More details on packages.ecosyste.ms', "https://packages.ecosyste.ms/registries/#{pkg_type_to_host(@ecosystem)}/packages/#{@package_name}", target: :_blank %>
@@ -66,6 +68,4 @@
       </div>
     </div>
   <% end %>
-
-  <%== pagy_bootstrap_nav(@pagy) if @pagy.pages > 1 %>  
 </div>
