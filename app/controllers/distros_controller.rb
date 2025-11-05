@@ -8,8 +8,16 @@ class DistrosController < ApplicationController
     end
 
     # Group by grouping_key (smart grouping that separates derivative distros)
-    distros = scope.order('versions_count DESC, name ASC, version_id DESC NULLS LAST, pretty_name ASC').to_a
+    distros = scope.to_a
     @distro_groups = distros.group_by(&:grouping_key).compact
+
+    # Sort each group's distros by version_id
+    @distro_groups.each do |key, group_distros|
+      @distro_groups[key] = group_distros.sort_by do |d|
+        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
+        [version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
+      end
+    end
 
     # Sort groups by total versions_count (sum of all distros in the group)
     @distro_groups = @distro_groups.sort_by { |_key, group_distros| -group_distros.sum(&:versions_count) }.to_h

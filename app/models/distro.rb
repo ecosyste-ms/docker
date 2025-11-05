@@ -35,6 +35,53 @@ class Distro < ApplicationRecord
     end
   end
 
+  def display_name
+    # For Puppy variants, extract the variant name from pretty_name
+    if name == "Puppy" && pretty_name.present? && pretty_name != name
+      # Extract variant from pretty_name (e.g., "S15Pup64 22.12" -> "S15Pup64")
+      variant_name = pretty_name.split(' ').first
+      "#{name} #{variant_name}"
+    else
+      name || id_field&.titleize
+    end
+  end
+
+  def rolling_release?
+    version_id.to_s.downcase == 'rolling' ||
+      build_id.to_s.downcase == 'rolling' ||
+      version_codename.to_s.downcase == 'rolling'
+  end
+
+  def version_display_text
+    return "rolling" if rolling_release? || version_id.to_s.include?('TEMPLATE')
+
+    display_text = version_id.presence || pretty_name
+
+    if variant.present?
+      "#{display_text} (#{variant})"
+    elsif version_codename.present?
+      "#{display_text} (#{version_codename})"
+    elsif build_id.present? && build_id != version_id
+      "#{display_text} - #{build_id}"
+    elsif pretty_name.to_s.downcase.include?('stream')
+      "#{display_text} Stream"
+    else
+      display_text
+    end
+  end
+
+  def self.group_stats(distros)
+    total_images = distros.sum(&:versions_count)
+    total_downloads = distros.sum { |d| d.total_downloads || 0 }
+    is_single_rolling = distros.count == 1 && distros.first.rolling_release?
+
+    {
+      total_images: total_images,
+      total_downloads: total_downloads,
+      is_single_rolling: is_single_rolling
+    }
+  end
+
   def update_versions_count
     count = versions.count
     update_column(:versions_count, count) if versions_count != count

@@ -1,7 +1,7 @@
 <div class="card mb-3">
   <div class="card-body">
     <h5 class="card-title">
-      <%= distros.first.name || grouping_key.titleize %>
+      <%= distros.first.display_name %>
       <% if distros.first.id_field.present? %>
         <small class='text-muted'>
           (<%= distros.first.id_field %>)
@@ -15,24 +15,15 @@
       </p>
     <% end %>
 
-    <%
-      # Check if this is a single rolling release
-      is_single_rolling = distros.count == 1 &&
-                         (distros.first.version_id.to_s.downcase == 'rolling' ||
-                          distros.first.build_id.to_s.downcase == 'rolling' ||
-                          distros.first.version_codename.to_s.downcase == 'rolling' ||
-                          distros.first.version_id.to_s.include?('TEMPLATE'))
-      total_images = distros.sum(&:versions_count)
-      total_downloads = distros.sum { |d| d.total_downloads || 0 }
-    %>
+    <% stats = Distro.group_stats(distros) %>
 
-    <% if is_single_rolling %>
-      <% if total_images > 0 %>
+    <% if stats[:is_single_rolling] %>
+      <% if stats[:total_images] > 0 %>
         <p class="card-text">
-          <strong><%= number_with_delimiter(total_images) %></strong>
-          <span class='text-muted'><%= 'Docker image'.pluralize(total_images) %></span>
-          <% if total_downloads > 0 %>
-            - <span class='text-muted'><%= number_with_delimiter(total_downloads) %> downloads</span>
+          <strong><%= number_with_delimiter(stats[:total_images]) %></strong>
+          <span class='text-muted'><%= 'Docker image'.pluralize(stats[:total_images]) %></span>
+          <% if stats[:total_downloads] > 0 %>
+            - <span class='text-muted'><%= number_with_delimiter(stats[:total_downloads]) %> downloads</span>
           <% end %>
         </p>
       <% end %>
@@ -40,11 +31,11 @@
       <p class="card-text">
         <strong>Versions:</strong>
         <span class='text-muted'><%= pluralize distros.count, 'version' %></span>
-        <% if total_images > 0 %>
-          - <span class='text-muted'><%= pluralize number_with_delimiter(total_images), 'Docker image' %></span>
+        <% if stats[:total_images] > 0 %>
+          - <span class='text-muted'><%= pluralize number_with_delimiter(stats[:total_images]), 'Docker image' %></span>
         <% end %>
-        <% if total_downloads > 0 %>
-          - <span class='text-muted'><%= number_with_delimiter(total_downloads) %> downloads</span>
+        <% if stats[:total_downloads] > 0 %>
+          - <span class='text-muted'><%= number_with_delimiter(stats[:total_downloads]) %> downloads</span>
         <% end %>
       </p>
     <% end %>
@@ -59,30 +50,7 @@
     <ul class="list-unstyled mb-0 small">
       <% visible_distros.each do |distro| %>
         <li class="mb-1">
-          <%
-            # Check if this is a rolling release
-            is_rolling = distro.version_id.to_s.downcase == 'rolling' ||
-                        distro.build_id.to_s.downcase == 'rolling' ||
-                        distro.version_codename.to_s.downcase == 'rolling'
-
-            # For rolling releases or template versions, just show "rolling"
-            if is_rolling || distro.version_id.to_s.include?('TEMPLATE')
-              display_text = "rolling"
-            else
-              # Show version_id if present, otherwise pretty_name
-              display_text = distro.version_id.presence || distro.pretty_name
-
-              # Add variant, codename, or build_id for additional context if available
-              if distro.variant.present?
-                display_text = "#{display_text} (#{distro.variant})"
-              elsif distro.version_codename.present?
-                display_text = "#{display_text} (#{distro.version_codename})"
-              elsif distro.build_id.present? && distro.build_id != distro.version_id
-                display_text = "#{display_text} - #{distro.build_id}"
-              end
-            end
-          %>
-          <%= link_to display_text, distro_path(distro.slug) %>
+          <%= link_to distro.version_display_text, distro_path(distro.slug) %>
         </li>
       <% end %>
 
@@ -90,30 +58,7 @@
         <div id="<%= group_id %>-hidden" class="collapse">
           <% hidden_distros.each do |distro| %>
             <li class="mb-1">
-              <%
-                # Check if this is a rolling release
-                is_rolling = distro.version_id.to_s.downcase == 'rolling' ||
-                            distro.build_id.to_s.downcase == 'rolling' ||
-                            distro.version_codename.to_s.downcase == 'rolling'
-
-                # For rolling releases or template versions, just show "rolling"
-                if is_rolling || distro.version_id.to_s.include?('TEMPLATE')
-                  display_text = "rolling"
-                else
-                  # Show version_id if present, otherwise pretty_name
-                  display_text = distro.version_id.presence || distro.pretty_name
-
-                  # Add variant, codename, or build_id for additional context if available
-                  if distro.variant.present?
-                    display_text = "#{display_text} (#{distro.variant})"
-                  elsif distro.version_codename.present?
-                    display_text = "#{display_text} (#{distro.version_codename})"
-                  elsif distro.build_id.present? && distro.build_id != distro.version_id
-                    display_text = "#{display_text} - #{distro.build_id}"
-                  end
-                end
-              %>
-              <%= link_to display_text, distro_path(distro.slug) %>
+              <%= link_to distro.version_display_text, distro_path(distro.slug) %>
             </li>
           <% end %>
         </div>
