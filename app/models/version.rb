@@ -246,9 +246,9 @@ class Version < ApplicationRecord
   def self.sbom_migration_stats
     total_versions = count
     total_with_sbom = where.not(sbom: nil).count
-    migrated = joins(:sbom_record).count
+    migrated = joins(:sbom_record).where(sbom: nil).count
     to_migrate = needs_sbom_migration.count
-    
+
     {
       total_versions: total_versions,
       total_with_sbom: total_with_sbom,
