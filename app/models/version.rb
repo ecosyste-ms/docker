@@ -245,17 +245,17 @@ class Version < ApplicationRecord
     
   def self.sbom_migration_stats
     total_versions = count
-    total_with_sbom = where.not(sbom: nil).count
     to_migrate = needs_sbom_migration.count
-    migrated = total_with_sbom - to_migrate
-    new_versions_with_sbom = joins(:sbom_record).where(sbom: nil).count
+    has_sbom_record = joins(:sbom_record).count
+    migrated = joins(:sbom_record).where(sbom: nil).count
+    total_with_sbom = to_migrate + migrated
 
     {
       total_versions: total_versions,
       total_with_sbom: total_with_sbom,
       migrated: migrated,
       to_migrate: to_migrate,
-      new_versions_with_sbom: new_versions_with_sbom,
+      has_sbom_record: has_sbom_record,
       progress_percent: total_with_sbom > 0 ? (migrated.to_f / total_with_sbom * 100).round(2) : 0
     }
   end
