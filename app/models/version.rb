@@ -232,7 +232,7 @@ class Version < ApplicationRecord
     total = needing_backfill.count
     success_count = 0
 
-    needing_backfill.each_instance do |version|
+    needing_backfill.find_each do |version|
       success_count += 1 if version.backfill_distro_name
     end
 
