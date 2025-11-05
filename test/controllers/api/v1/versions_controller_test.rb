@@ -2,28 +2,13 @@ require "test_helper"
 
 class Api::V1::VersionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @package = Package.create!(name: 'redis')
-    @version1 = Version.create!(
-      package: @package,
-      number: '7.0.5',
-      published_at: 3.days.ago,
-      created_at: 5.days.ago,
-      updated_at: 2.days.ago
-    )
-    @version2 = Version.create!(
-      package: @package,
-      number: '7.0.4',
-      published_at: 7.days.ago,
-      created_at: 10.days.ago,
-      updated_at: 6.days.ago
-    )
-    @version3 = Version.create!(
-      package: @package,
-      number: '7.0.3',
-      published_at: 14.days.ago,
-      created_at: 20.days.ago,
-      updated_at: 12.days.ago
-    )
+    @package = create(:package, name: 'redis')
+    @version1 = create(:version, package: @package, number: '7.0.5',
+      published_at: 3.days.ago, created_at: 5.days.ago, updated_at: 2.days.ago)
+    @version2 = create(:version, package: @package, number: '7.0.4',
+      published_at: 7.days.ago, created_at: 10.days.ago, updated_at: 6.days.ago)
+    @version3 = create(:version, package: @package, number: '7.0.3',
+      published_at: 14.days.ago, created_at: 20.days.ago, updated_at: 12.days.ago)
   end
 
   context "GET #index" do

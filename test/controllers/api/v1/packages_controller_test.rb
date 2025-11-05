@@ -2,49 +2,28 @@ require "test_helper"
 
 class Api::V1::PackagesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @package = Package.create!(
-      name: 'redis',
-      description: 'Redis is an open source in-memory data structure store',
-      latest_release_number: '7.0.5',
-      latest_release_published_at: 1.day.ago,
-      dependencies_count: 10,
-      has_sbom: true,
+    @package = create(:package, :redis,
       created_at: 5.days.ago,
       updated_at: 2.days.ago
     )
-    
-    @package2 = Package.create!(
-      name: 'nginx',
-      description: 'nginx web server',
-      latest_release_number: '1.23.3',
+
+    @package2 = create(:package, :nginx,
       latest_release_published_at: 3.days.ago,
       has_sbom: true,
       created_at: 10.days.ago,
       updated_at: 6.days.ago
     )
-    
-    @package_without_sbom = Package.create!(
+
+    @package_without_sbom = create(:package,
       name: 'apache',
       description: 'Apache HTTP Server',
       has_sbom: false,
+      latest_release_published_at: nil,
       created_at: 20.days.ago
     )
-    
-    # Create versions for the package
-    @version1 = Version.create!(
-      package: @package,
-      number: '7.0.5',
-      published_at: 1.day.ago,
-      distro_name: 'Alpine Linux v3.17',
-      syft_version: 'v0.70.0',
-      artifacts_count: 42
-    )
-    
-    @version2 = Version.create!(
-      package: @package,
-      number: '7.0.4',
-      published_at: 7.days.ago
-    )
+
+    @version1 = create(:version, :with_sbom, package: @package, number: '7.0.5', published_at: 1.day.ago)
+    @version2 = create(:version, package: @package, number: '7.0.4', published_at: 7.days.ago)
   end
 
   context "GET #index" do

@@ -2,32 +2,9 @@ require "test_helper"
 
 class DistrosControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @distro1 = Distro.create!(
-      pretty_name: "Ubuntu 22.04.1 LTS",
-      name: "Ubuntu",
-      id_field: "ubuntu",
-      version_id: "22.04",
-      version_codename: "jammy",
-      home_url: "https://www.ubuntu.com/",
-      support_url: "https://help.ubuntu.com/",
-      bug_report_url: "https://bugs.launchpad.net/ubuntu/"
-    )
-
-    @distro2 = Distro.create!(
-      pretty_name: "Debian GNU/Linux 12 (bookworm)",
-      name: "Debian GNU/Linux",
-      id_field: "debian",
-      version_id: "12",
-      version_codename: "bookworm",
-      home_url: "https://www.debian.org/"
-    )
-
-    @distro3 = Distro.create!(
-      pretty_name: "Alpine Linux v3.17",
-      name: "Alpine Linux",
-      id_field: "alpine",
-      version_id: "3.17"
-    )
+    @distro1 = create(:distro, :ubuntu)
+    @distro2 = create(:distro, :debian)
+    @distro3 = create(:distro, :alpine)
   end
 
   context "GET #index" do
@@ -47,14 +24,7 @@ class DistrosControllerTest < ActionDispatch::IntegrationTest
     end
 
     should "group distros by id_field" do
-      # Create multiple versions of Ubuntu
-      @distro1b = Distro.create!(
-        pretty_name: "Ubuntu 20.04 LTS",
-        name: "Ubuntu",
-        id_field: "ubuntu",
-        version_id: "20.04",
-        version_codename: "focal"
-      )
+      @distro1b = create(:distro, :ubuntu_focal)
 
       get distros_path
 

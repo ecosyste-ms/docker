@@ -2,12 +2,8 @@ require "test_helper"
 
 class VersionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @package = Package.create!(name: 'redis')
-    @version = Version.create!(
-      package: @package,
-      number: '7.0.5',
-      published_at: 1.day.ago
-    )
+    @package = create(:package, name: 'redis')
+    @version = create(:version, package: @package, number: '7.0.5', published_at: 1.day.ago)
   end
 
   context "GET #index" do
@@ -18,10 +14,10 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
     end
     
     should "handle package name with slashes" do
-      package_with_slash = Package.create!(name: 'library/redis')
-      
+      package_with_slash = create(:package, name: 'library/redis')
+
       get package_versions_path('library/redis')
-      
+
       assert_redirected_to package_path(package_with_slash)
     end
   end
@@ -54,17 +50,10 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
     end
     
     should "include dependencies in query" do
-      dependency = Dependency.create!(
-        version: @version,
-        package: @package,
-        ecosystem: 'npm',
-        package_name: 'express',
-        requirements: '4.18.2',
-        purl: 'pkg:npm/express@4.18.2'
-      )
-      
+      dependency = create(:dependency, :express, version: @version, package: @package)
+
       get package_version_path(@package.name, @version.number)
-      
+
       assert_response :success
       # Check that dependencies are loaded to avoid N+1
       assert_includes assigns(:version).dependencies, dependency
