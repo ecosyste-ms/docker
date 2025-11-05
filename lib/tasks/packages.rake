@@ -32,4 +32,11 @@ namespace :packages do
     package.sync_all_versions
     puts "Done! Synced #{package.versions.count} versions."
   end
+
+  desc 'refresh ecosystem stats cache'
+  task refresh_ecosystem_stats: :environment do
+    puts "Refreshing ecosystem stats..."
+    Ecosystem.refresh_stats
+    puts "Done! Updated #{Ecosystem.count} ecosystems."
+  end
 end

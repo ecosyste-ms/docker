@@ -15,6 +15,10 @@
     {
       "command": "bundle exec rake distros:sync_daily",
       "schedule": "0 0 * * *"
+    },
+    {
+      "command": "bundle exec rake packages:refresh_ecosystem_stats",
+      "schedule": "0 0 * * *"
     }
   ]
 }

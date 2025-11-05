@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_05_093348) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_05_122448) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_093348) do
     t.index ["pretty_name"], name: "index_distros_on_pretty_name"
     t.index ["slug"], name: "index_distros_on_slug", unique: true
     t.index ["versions_count"], name: "index_distros_on_versions_count"
+  end
+
+  create_table "ecosystems", force: :cascade do |t|
+    t.string "name"
+    t.integer "packages_count"
+    t.bigint "total_downloads"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_ecosystems_on_name", unique: true
   end
 
   create_table "exports", force: :cascade do |t|

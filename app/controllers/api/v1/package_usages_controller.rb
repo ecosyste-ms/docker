@@ -1,6 +1,6 @@
 class Api::V1::PackageUsagesController < Api::V1::ApplicationController
   def index
-    @ecosystems = PackageUsage.group(:ecosystem).count.sort_by{|e,c| -c }
+    @ecosystems = Ecosystem.order(packages_count: :desc).pluck(:name, :packages_count, :total_downloads)
     expires_in 1.day, public: true
   end
 
