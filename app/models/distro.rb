@@ -40,6 +40,14 @@ class Distro < ApplicationRecord
     update_column(:versions_count, count) if versions_count != count
   end
 
+  def update_total_downloads
+    downloads = Package.joins(:versions)
+                      .where(versions: { distro_name: pretty_name })
+                      .distinct
+                      .sum(:downloads)
+    update_column(:total_downloads, downloads) if total_downloads != downloads
+  end
+
   def related_distros
     return Distro.none if id_like.blank?
 
@@ -113,6 +121,12 @@ class Distro < ApplicationRecord
     end
   end
 
+  def self.update_all_total_downloads
+    Distro.find_each do |distro|
+      distro.update_total_downloads
+    end
+  end
+
   def self.missing_from_versions
     # Find distro_names in Version table that don't exist in Distro table
     Version.where.not(distro_name: [nil, ''])
@@ -169,8 +183,9 @@ class Distro < ApplicationRecord
         parse_and_create_distro(file_path)
       end
 
-      # Update versions counts after syncing
+      # Update counts after syncing
       update_all_versions_counts
+      update_all_total_downloads
     end
   end
 

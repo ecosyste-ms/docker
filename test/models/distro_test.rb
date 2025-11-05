@@ -210,6 +210,71 @@ class DistroTest < ActiveSupport::TestCase
     assert_equal 1, distro2.reload.versions_count
   end
 
+  test "update_total_downloads sums downloads from unique packages" do
+    distro = Distro.create!(
+      pretty_name: "Ubuntu 22.04.1 LTS",
+      name: "Ubuntu",
+      id_field: "ubuntu"
+    )
+
+    package1 = Package.create!(name: "redis", downloads: 1000000)
+    package2 = Package.create!(name: "nginx", downloads: 500000)
+    package3 = Package.create!(name: "postgres", downloads: 750000)
+
+    # Create versions for this distro
+    Version.create!(package: package1, number: "7.0", distro_name: "Ubuntu 22.04.1 LTS")
+    Version.create!(package: package1, number: "6.0", distro_name: "Ubuntu 22.04.1 LTS")
+    Version.create!(package: package2, number: "1.23", distro_name: "Ubuntu 22.04.1 LTS")
+    Version.create!(package: package3, number: "15.0", distro_name: "Ubuntu 22.04.1 LTS")
+
+    # Create version for different distro
+    Version.create!(package: package1, number: "5.0", distro_name: "Debian GNU/Linux 12 (bookworm)")
+
+    distro.update_total_downloads
+
+    # Should sum unique packages only: 1000000 + 500000 + 750000 = 2250000
+    assert_equal 2250000, distro.total_downloads
+  end
+
+  test "update_total_downloads handles nil downloads" do
+    distro = Distro.create!(pretty_name: "Alpine Linux v3.17")
+
+    package1 = Package.create!(name: "test1", downloads: 100000)
+    package2 = Package.create!(name: "test2", downloads: nil)
+
+    Version.create!(package: package1, number: "1.0", distro_name: "Alpine Linux v3.17")
+    Version.create!(package: package2, number: "1.0", distro_name: "Alpine Linux v3.17")
+
+    distro.update_total_downloads
+
+    assert_equal 100000, distro.total_downloads
+  end
+
+  test "update_total_downloads sets to zero when no packages" do
+    distro = Distro.create!(pretty_name: "Alpine Linux v3.17")
+
+    distro.update_total_downloads
+
+    assert_equal 0, distro.total_downloads
+  end
+
+  test "update_all_total_downloads updates all distros" do
+    distro1 = Distro.create!(pretty_name: "Debian GNU/Linux 12 (bookworm)")
+    distro2 = Distro.create!(pretty_name: "Ubuntu 22.04 LTS")
+
+    package1 = Package.create!(name: "redis", downloads: 1000000)
+    package2 = Package.create!(name: "nginx", downloads: 500000)
+
+    Version.create!(package: package1, number: "7.0-debian", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    Version.create!(package: package2, number: "1.23", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    Version.create!(package: package1, number: "7.0-ubuntu", distro_name: "Ubuntu 22.04 LTS")
+
+    Distro.update_all_total_downloads
+
+    assert_equal 1500000, distro1.reload.total_downloads
+    assert_equal 1000000, distro2.reload.total_downloads
+  end
+
   test "has_many versions relationship works" do
     distro = Distro.create!(
       pretty_name: "Ubuntu 22.04.1 LTS",

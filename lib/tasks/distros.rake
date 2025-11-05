@@ -4,10 +4,12 @@ namespace :distros do
     Distro.sync_from_github
   end
 
-  desc "Update versions_count for all distros"
+  desc "Update versions_count and total_downloads for all distros"
   task update_counts: :environment do
     puts "Updating versions counts for all distros..."
     Distro.update_all_versions_counts
+    puts "Updating total downloads for all distros..."
+    Distro.update_all_total_downloads
     puts "Done! Updated #{Distro.count} distros."
   end
 

@@ -6,6 +6,7 @@ FactoryBot.define do
     version_id { "1.0" }
     id_like { "debian" }
     versions_count { 0 }
+    total_downloads { 0 }
 
     trait :alpine do
       pretty_name { "Alpine Linux v3.17" }
