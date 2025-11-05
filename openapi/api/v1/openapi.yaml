@@ -320,6 +320,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Distro'
+  /distros/{slug}/versions:
+    get:
+      summary: get a list of versions for a Linux distribution
+      operationId: getDistroVersions
+      tags:
+        - distros
+      parameters:
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          description: slug of distribution
+        - name: page
+          in: query
+          description: pagination page number
+          required: false
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of records to return
+          required: false
+          schema:
+            type: integer
+        - name: created_after
+          in: query
+          description: filter by created_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updated_after
+          in: query
+          description: filter by updated_at after given time
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: sort
+          in: query
+          description: field to order results by
+          required: false
+          schema:
+            type: string
+        - name: order
+          in: query
+          description: direction to order results by
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Version'
 components:
   schemas:
     Package:
@@ -368,6 +428,13 @@ components:
             type: string
           version_url:
             type: string
+          package:
+            type: object
+            properties:
+              name:
+                type: string
+              package_url:
+                type: string
           dependencies:
             type: array
             items:
@@ -387,6 +454,8 @@ components:
         name:
           type: string
         packages_count:
+          type: integer
+        total_downloads:
           type: integer
         ecosystem_url:
           type: string
@@ -429,6 +498,8 @@ components:
         slug:
           type: string
         versions_count:
+          type: integer
+        total_downloads:
           type: integer
         home_url:
           type: string

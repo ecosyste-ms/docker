@@ -186,13 +186,58 @@ class Api::V1::VersionsControllerTest < ActionDispatch::IntegrationTest
           syft_version: 'v0.70.0',
           artifacts_count: 1
         )
-        
+
         get api_v1_package_version_path(@package.name, @version1.number), as: :json
-        
+
         json = JSON.parse(response.body)
         # The API returns distro method result, not individual fields
         assert_equal 'Alpine Linux v3.17', json['distro']
       end
+    end
+  end
+
+  context "GET #index for distro" do
+    setup do
+      @distro = create(:distro, :ubuntu)
+      @pkg1 = create(:package, name: 'ubuntu-package-1')
+      @pkg2 = create(:package, name: 'ubuntu-package-2')
+      @distro_v1 = create(:version, package: @pkg1, number: '1.0', distro_name: @distro.pretty_name, published_at: 1.day.ago)
+      @distro_v2 = create(:version, package: @pkg1, number: '2.0', distro_name: @distro.pretty_name, published_at: 2.days.ago)
+      @distro_v3 = create(:version, package: @pkg2, number: '1.5', distro_name: @distro.pretty_name, published_at: 3.days.ago)
+    end
+
+    should "return successful JSON response" do
+      get api_v1_distro_versions_path(@distro.slug), as: :json
+
+      assert_response :success
+      assert_match /application\/json/, response.content_type
+    end
+
+    should "return versions for distro" do
+      get api_v1_distro_versions_path(@distro.slug), as: :json
+
+      json = JSON.parse(response.body)
+      assert_equal 3, json.length
+    end
+
+    should "include package information" do
+      get api_v1_distro_versions_path(@distro.slug), as: :json
+
+      json = JSON.parse(response.body)
+      assert json.first['package'].present?
+      assert json.first['package']['name'].present?
+    end
+
+    should "order by published_at desc" do
+      get api_v1_distro_versions_path(@distro.slug), as: :json
+
+      json = JSON.parse(response.body)
+      assert_equal '1.0', json[0]['number']
+    end
+
+    should "raise 404 for non-existent distro" do
+      get api_v1_distro_versions_path('non-existent'), as: :json
+      assert_response :not_found
     end
   end
 end

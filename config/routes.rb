@@ -19,7 +19,9 @@ Rails.application.routes.draw do
         resources :versions, only: [:index, :show], constraints: { id: /.*/ }
       end
 
-      resources :distros, only: [:index, :show]
+      resources :distros, only: [:index, :show] do
+        resources :versions, only: [:index]
+      end
 
       get '/usage', to: 'package_usages#index', as: 'package_usages'
       get '/usage/:ecosystem', to: 'package_usages#ecosystem', as: 'ecosystem_package_usages'
