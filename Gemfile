@@ -42,6 +42,7 @@ gem 'google-protobuf'
 gem 'redis'
 gem 'ostruct'
 gem 'postgresql_cursor'
+gem 'groupdate'
 
 group :development, :test do
   gem 'dotenv-rails'
