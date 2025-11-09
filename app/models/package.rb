@@ -173,4 +173,43 @@ class Package < ApplicationRecord
   def self.syft_version
     @syft_version ||= `syft --version`.strip.split(' ').last
   end
+
+  def self.ensure_popular_have_sboms(limit: 1000)
+    processed = 0
+    enqueued = 0
+    skipped = 0
+
+    packages = where(has_sbom: false).where.not(downloads: nil).order(downloads: :desc)
+    packages = packages.limit(limit) if limit
+
+    packages.each do |package|
+      processed += 1
+
+      version = if package.latest_release_number.present?
+                  package.versions.find_by(number: package.latest_release_number)
+                else
+                  package.versions.first
+                end
+
+      if version
+        version.parse_sbom_async
+        enqueued += 1
+        print "+"
+      else
+        skipped += 1
+        print "S"
+      end
+
+      if processed % 100 == 0
+        puts "\nProcessed: #{processed}, Enqueued: #{enqueued}, Skipped: #{skipped}"
+      end
+    end
+
+    puts "\n=== Complete ==="
+    {
+      total_processed: processed,
+      enqueued_for_parsing: enqueued,
+      skipped_no_versions: skipped
+    }
+  end
 end
