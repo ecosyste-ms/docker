@@ -200,7 +200,8 @@ class VersionTest < ActiveSupport::TestCase
         setup do
           status_mock = mock('status')
           status_mock.stubs(:success?).returns(true)
-          Open3.expects(:capture2).with('syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
+          status_mock.stubs(:exitstatus).returns(0)
+          Open3.expects(:capture2).with('timeout', '15m', 'syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
         end
 
         should 'create sbom_record and update last_synced_at' do
@@ -241,7 +242,8 @@ class VersionTest < ActiveSupport::TestCase
           
           # With Open3.capture2, the dangerous characters are passed as-is without shell interpretation
           image_name = 'test/package"; echo "pwned:1.0.0"; rm -rf /'
-          Open3.expects(:capture2).with('syft', image_name, '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
+          Open3.expects(:capture2).with('timeout', '15m', 'syft', image_name, '--quiet', '--output', 'syft-json').returns([@syft_output, status_mock])
+          status_mock.stubs(:exitstatus).returns(0)
         end
         
         should 'safely handle dangerous characters without shell interpretation' do
@@ -251,12 +253,32 @@ class VersionTest < ActiveSupport::TestCase
         end
       end
 
+      context 'when syft command times out' do
+        setup do
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(false)
+          status_mock.stubs(:exitstatus).returns(124)
+          Open3.expects(:capture2).with('timeout', '15m', 'syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns(['', status_mock])
+        end
+
+        should 'handle timeout and update timestamp' do
+          @version.expects(:puts).with(includes('Timeout'))
+          freeze_time do
+            @version.parse_sbom
+            @version.reload
+
+            assert_nil @version.sbom_record
+            assert_equal Time.now, @version.last_synced_at
+          end
+        end
+      end
+
       context 'when syft command fails' do
         setup do
           status_mock = mock('status')
           status_mock.stubs(:success?).returns(false)
           status_mock.stubs(:exitstatus).returns(1)
-          Open3.expects(:capture2).with('syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns(['', status_mock])
+          Open3.expects(:capture2).with('timeout', '15m', 'syft', 'test/package:1.0.0', '--quiet', '--output', 'syft-json').returns(['', status_mock])
         end
 
         should 'handle error and update timestamp' do

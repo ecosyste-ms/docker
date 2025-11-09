@@ -55,8 +55,13 @@ class Version < ApplicationRecord
     require 'open3'
     image_name = "#{self.package.name}:#{self.number}"
 
-    stdout, status = Open3.capture2('syft', image_name, '--quiet', '--output', 'syft-json')
-    raise "Syft command failed with status #{status.exitstatus}" unless status.success?
+    stdout, status = Open3.capture2('timeout', '15m', 'syft', image_name, '--quiet', '--output', 'syft-json')
+
+    if status.exitstatus == 124
+      raise Timeout::Error, "Syft timed out after 15 minutes"
+    elsif !status.success?
+      raise "Syft command failed with status #{status.exitstatus}"
+    end
 
     json = JSON.parse(stdout)
 
@@ -82,6 +87,9 @@ class Version < ApplicationRecord
 
       save_dependencies
     end
+  rescue Timeout::Error => e
+    puts "Timeout parsing SBOM for #{package.name}:#{number} after 15 minutes"
+    update(last_synced_at: Time.now)
   rescue => e
     puts e
     update(last_synced_at: Time.now)
