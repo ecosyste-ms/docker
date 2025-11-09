@@ -181,16 +181,15 @@ class Api::V1::VersionsControllerTest < ActionDispatch::IntegrationTest
       
       should "include SBOM information in response" do
         @version1.update!(
-          sbom: @sbom_data,
           distro_name: 'Alpine Linux v3.17',
           syft_version: 'v0.70.0',
           artifacts_count: 1
         )
+        @version1.create_sbom_record!(data: @sbom_data)
 
         get api_v1_package_version_path(@package.name, @version1.number), as: :json
 
         json = JSON.parse(response.body)
-        # The API returns distro method result, not individual fields
         assert_equal 'Alpine Linux v3.17', json['distro']
       end
     end

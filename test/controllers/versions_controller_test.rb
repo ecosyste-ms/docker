@@ -146,16 +146,7 @@ class VersionsControllerTest < ActionDispatch::IntegrationTest
         }
       end
       
-      should "display version with old SBOM structure" do
-        @version.update!(sbom: @sbom_data)
-        
-        get package_version_path(@package.name, @version.number)
-        
-        assert_response :success
-        assert @version.has_sbom?
-      end
-      
-      should "display version with new SBOM structure" do
+      should "display version with SBOM structure" do
         @version.create_sbom_record!(data: @sbom_data)
         @version.update!(
           distro_name: 'Alpine Linux v3.17',
