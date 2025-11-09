@@ -50,5 +50,30 @@ class PackageUsagesControllerTest < ActionDispatch::IntegrationTest
       assert_includes response.headers['Cache-Control'], 'max-age=86400'
       assert_includes response.headers['Cache-Control'], 'public'
     end
+
+    should "sort by name ascending" do
+      get package_usages_path(sort: 'name', order: 'asc')
+
+      ecosystems = assigns(:ecosystems)
+      assert_equal 'gem', ecosystems[0][:ecosystem]
+      assert_equal 'maven', ecosystems[1][:ecosystem]
+      assert_equal 'npm', ecosystems[2][:ecosystem]
+    end
+
+    should "sort by total_downloads descending" do
+      get package_usages_path(sort: 'total_downloads', order: 'desc')
+
+      ecosystems = assigns(:ecosystems)
+      assert_equal 'npm', ecosystems[0][:ecosystem]
+      assert_equal 5000000, ecosystems[0][:downloads]
+    end
+
+    should "ignore invalid sort parameters" do
+      get package_usages_path(sort: 'invalid', order: 'desc')
+
+      assert_response :success
+      ecosystems = assigns(:ecosystems)
+      assert_equal 'npm', ecosystems[0][:ecosystem]
+    end
   end
 end

@@ -1,6 +1,13 @@
 class Api::V1::PackageUsagesController < Api::V1::ApplicationController
   def index
-    @ecosystems = Ecosystem.order(packages_count: :desc).pluck(:name, :packages_count, :total_downloads)
+    sort = params[:sort] || 'packages_count'
+    order = params[:order] || 'desc'
+
+    allowed_sorts = ['name', 'packages_count', 'total_downloads']
+    sort = 'packages_count' unless allowed_sorts.include?(sort)
+    order = 'desc' unless ['asc', 'desc'].include?(order)
+
+    @ecosystems = Ecosystem.order("#{sort} #{order}").pluck(:name, :packages_count, :total_downloads)
     expires_in 1.day, public: true
   end
 

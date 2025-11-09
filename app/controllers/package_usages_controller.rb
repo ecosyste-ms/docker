@@ -1,7 +1,14 @@
 class PackageUsagesController < ApplicationController
   def index
+    sort = params[:sort] || 'packages_count'
+    order = params[:order] || 'desc'
+
+    allowed_sorts = ['name', 'packages_count', 'total_downloads']
+    sort = 'packages_count' unless allowed_sorts.include?(sort)
+    order = 'desc' unless ['asc', 'desc'].include?(order)
+
     @ecosystems = Ecosystem
-      .order(packages_count: :desc)
+      .order("#{sort} #{order}")
       .pluck(:name, :packages_count, :total_downloads)
       .map { |name, count, downloads| { ecosystem: name, count: count, downloads: downloads } }
 

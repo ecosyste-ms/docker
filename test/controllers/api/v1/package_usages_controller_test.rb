@@ -51,5 +51,30 @@ class Api::V1::PackageUsagesControllerTest < ActionDispatch::IntegrationTest
       assert_includes response.headers['Cache-Control'], 'max-age=86400'
       assert_includes response.headers['Cache-Control'], 'public'
     end
+
+    should "sort by name ascending" do
+      get api_v1_package_usages_path(sort: 'name', order: 'asc'), as: :json
+
+      json = JSON.parse(response.body)
+      assert_equal 'gem', json[0]['name']
+      assert_equal 'maven', json[1]['name']
+      assert_equal 'npm', json[2]['name']
+    end
+
+    should "sort by total_downloads descending" do
+      get api_v1_package_usages_path(sort: 'total_downloads', order: 'desc'), as: :json
+
+      json = JSON.parse(response.body)
+      assert_equal 'npm', json[0]['name']
+      assert_equal 5000000, json[0]['total_downloads']
+    end
+
+    should "ignore invalid sort parameters" do
+      get api_v1_package_usages_path(sort: 'invalid', order: 'desc'), as: :json
+
+      assert_response :success
+      json = JSON.parse(response.body)
+      assert_equal 'npm', json[0]['name']
+    end
   end
 end
