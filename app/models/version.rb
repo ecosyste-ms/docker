@@ -1,3 +1,6 @@
+require 'open3'
+require 'timeout'
+
 class Version < ApplicationRecord
 
   validates :number, presence: true
@@ -52,7 +55,6 @@ class Version < ApplicationRecord
   end
 
   def parse_sbom
-    require 'open3'
     image_name = "#{self.package.name}:#{self.number}"
 
     stdout, status = Open3.capture2('timeout', '15m', 'syft', image_name, '--quiet', '--output', 'syft-json')
@@ -163,5 +165,31 @@ class Version < ApplicationRecord
       failed: total - success_count
     }
   end
-    
+
+  def extract_os_release
+    image_name = "#{self.package.name}:#{self.number}"
+
+    Timeout.timeout(30) do
+      # Try /etc/os-release first (standard location)
+      stdout, status = Open3.capture2('docker', 'run', '--rm', image_name, 'cat', '/etc/os-release')
+
+      if !status.success?
+        # Try /usr/lib/os-release as fallback (alternative location)
+        stdout, status = Open3.capture2('docker', 'run', '--rm', image_name, 'cat', '/usr/lib/os-release')
+      end
+
+      if status.success?
+        stdout
+      else
+        nil
+      end
+    end
+  rescue Timeout::Error
+    Rails.logger.error "Timeout extracting os-release for #{image_name}"
+    nil
+  rescue => e
+    Rails.logger.error "Failed to extract os-release for #{image_name}: #{e.message}"
+    nil
+  end
+
 end

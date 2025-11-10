@@ -389,6 +389,113 @@ class VersionTest < ActiveSupport::TestCase
         end
       end
     end
-    
+
+    context '#extract_os_release' do
+      setup do
+        @os_release_content = <<~OSRELEASE
+          NAME="Alpine Linux"
+          ID=alpine
+          VERSION_ID=3.17.0
+          PRETTY_NAME="Alpine Linux v3.17"
+          HOME_URL="https://alpinelinux.org/"
+          BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
+        OSRELEASE
+      end
+
+      context 'when os-release exists at /etc/os-release' do
+        setup do
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/etc/os-release').returns([@os_release_content, status_mock])
+        end
+
+        should 'return the os-release content' do
+          result = @version.extract_os_release
+          assert_equal @os_release_content, result
+          assert_includes result, 'Alpine Linux'
+        end
+      end
+
+      context 'when os-release exists at /usr/lib/os-release' do
+        setup do
+          status_mock_etc = mock('status_etc')
+          status_mock_etc.stubs(:success?).returns(false)
+
+          status_mock_usr = mock('status_usr')
+          status_mock_usr.stubs(:success?).returns(true)
+
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/etc/os-release').returns(['', status_mock_etc])
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/usr/lib/os-release').returns([@os_release_content, status_mock_usr])
+        end
+
+        should 'fall back to /usr/lib/os-release' do
+          result = @version.extract_os_release
+          assert_equal @os_release_content, result
+          assert_includes result, 'Alpine Linux'
+        end
+      end
+
+      context 'when os-release does not exist' do
+        setup do
+          status_mock_etc = mock('status_etc')
+          status_mock_etc.stubs(:success?).returns(false)
+
+          status_mock_usr = mock('status_usr')
+          status_mock_usr.stubs(:success?).returns(false)
+
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/etc/os-release').returns(['', status_mock_etc])
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/usr/lib/os-release').returns(['', status_mock_usr])
+        end
+
+        should 'return nil' do
+          result = @version.extract_os_release
+          assert_nil result
+        end
+      end
+
+      context 'when docker command raises an exception' do
+        setup do
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/etc/os-release').raises(StandardError.new('Docker error'))
+        end
+
+        should 'return nil and log the error' do
+          Rails.logger.expects(:error).with(regexp_matches(/Failed to extract os-release/))
+          result = @version.extract_os_release
+          assert_nil result
+        end
+      end
+
+      context 'when docker command times out' do
+        setup do
+          Open3.expects(:capture2).with('docker', 'run', '--rm', 'test/package:1.0.0', 'cat', '/etc/os-release').raises(Timeout::Error.new)
+        end
+
+        should 'return nil and log timeout' do
+          Rails.logger.expects(:error).with(regexp_matches(/Timeout extracting os-release/))
+          result = @version.extract_os_release
+          assert_nil result
+        end
+      end
+
+      context 'with potentially dangerous package names' do
+        setup do
+          @dangerous_package = Package.create!(name: 'test/package"; echo "pwned')
+          @dangerous_version = Version.create!(package: @dangerous_package, number: '1.0.0"; rm -rf /')
+
+          status_mock = mock('status')
+          status_mock.stubs(:success?).returns(true)
+
+          # With Open3.capture2, the dangerous characters are passed as-is without shell interpretation
+          image_name = 'test/package"; echo "pwned:1.0.0"; rm -rf /'
+          Open3.expects(:capture2).with('docker', 'run', '--rm', image_name, 'cat', '/etc/os-release').returns([@os_release_content, status_mock])
+        end
+
+        should 'safely handle dangerous characters without shell interpretation' do
+          result = @dangerous_version.extract_os_release
+          assert_equal @os_release_content, result
+        end
+      end
+    end
+
   end
 end
