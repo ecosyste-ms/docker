@@ -37,6 +37,10 @@ namespace :packages do
   task refresh_ecosystem_stats: :environment do
     puts "Refreshing ecosystem stats..."
     Ecosystem.refresh_stats
-    puts "Done! Updated #{Ecosystem.count} ecosystems."
+  end
+
+  desc 'ensure popular packages have sboms'
+  task ensure_popular_have_sboms: :environment do
+    Package.ensure_popular_have_sboms(limit: 50)
   end
 end

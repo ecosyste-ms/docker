@@ -19,6 +19,10 @@
     {
       "command": "bundle exec rake packages:refresh_ecosystem_stats",
       "schedule": "0 0 * * *"
+    },
+    {
+      "command": "bundle exec rake packages:ensure_popular_have_sboms",
+      "schedule": "0 * * * *"
     }
   ]
 }
