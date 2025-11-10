@@ -45,7 +45,7 @@ class Package < ApplicationRecord
 
   def self.sync_popular
     page = (REDIS.get('next_popular_page') || 1).to_i
-    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=50&page=#{page}"
+    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=100&page=#{page}"
     response = Faraday.get(url) do |req|
       req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
     end
@@ -70,7 +70,7 @@ class Package < ApplicationRecord
   end
 
   def self.resync_outdated
-    Package.active.order('last_synced_at ASC').limit(200).each(&:sync_async)
+    Package.active.order('last_synced_at ASC').limit(300).each(&:sync_async)
   end
 
   def packages_api_url

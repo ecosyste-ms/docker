@@ -41,6 +41,6 @@ namespace :packages do
 
   desc 'ensure popular packages have sboms'
   task ensure_popular_have_sboms: :environment do
-    Package.ensure_popular_have_sboms(limit: 50)
+    Package.ensure_popular_have_sboms(limit: 100)
   end
 end
