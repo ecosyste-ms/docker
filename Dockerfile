@@ -22,9 +22,10 @@ RUN apk add --update \
  && rm -rf /var/cache/apk/*
 
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
-ENV RUBY_YJIT_ENABLE=1 
+ENV RUBY_YJIT_ENABLE=1
+ENV SYFT_VERSION=v1.37.0
 
-RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin ${SYFT_VERSION}
 
 # Will invalidate cache as soon as the Gemfile changes
 COPY Gemfile Gemfile.lock $APP_ROOT/
