@@ -70,6 +70,7 @@ class Version < ApplicationRecord
       self.syft_version = json.dig('descriptor', 'version')
       self.artifacts_count = extract_purls_from_json(json).count
       self.last_synced_at = Time.now
+      self.last_synced_error = nil
 
       if sbom_record.present?
         sbom_record.update!(data: json)
@@ -88,11 +89,9 @@ class Version < ApplicationRecord
       save_dependencies
     end
   rescue Timeout::Error => e
-    puts "Timeout parsing SBOM for #{package.name}:#{number} after 15 minutes"
-    update(last_synced_at: Time.now)
+    update(last_synced_at: Time.now, last_synced_error: "Timeout after 15 minutes")
   rescue => e
-    puts e
-    update(last_synced_at: Time.now)
+    update(last_synced_at: Time.now, last_synced_error: "#{e.class}: #{e.message}")
   end
   
   private

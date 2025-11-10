@@ -262,13 +262,13 @@ class VersionTest < ActiveSupport::TestCase
         end
 
         should 'handle timeout and update timestamp' do
-          @version.expects(:puts).with(includes('Timeout'))
           freeze_time do
             @version.parse_sbom
             @version.reload
 
             assert_nil @version.sbom_record
             assert_equal Time.now, @version.last_synced_at
+            assert_equal "Timeout after 15 minutes", @version.last_synced_error
           end
         end
       end
@@ -285,7 +285,6 @@ class VersionTest < ActiveSupport::TestCase
           @version.update!(distro_name: 'Ubuntu', syft_version: 'v1.0.0', artifacts_count: 5)
           existing_sbom_record = @version.create_sbom_record!(data: {'existing' => 'data'})
 
-          @version.expects(:puts)
           freeze_time do
             @version.parse_sbom
             @version.reload
@@ -296,17 +295,18 @@ class VersionTest < ActiveSupport::TestCase
             assert_equal 'v1.0.0', @version.syft_version
             assert_equal 5, @version.artifacts_count
             assert_equal Time.now, @version.last_synced_at
+            assert_includes @version.last_synced_error, 'RuntimeError: Syft command failed'
           end
         end
 
         should 'handle error when no existing sbom data' do
-          @version.expects(:puts)
           freeze_time do
             @version.parse_sbom
             @version.reload
 
             assert_nil @version.sbom_record
             assert_equal Time.now, @version.last_synced_at
+            assert_includes @version.last_synced_error, 'RuntimeError: Syft command failed'
           end
         end
       end
