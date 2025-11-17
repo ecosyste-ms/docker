@@ -23,7 +23,7 @@ RUN apk add --update \
 
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 ENV RUBY_YJIT_ENABLE=1
-ENV SYFT_VERSION=v1.37.0
+ENV SYFT_VERSION=v1.38.0
 
 RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin ${SYFT_VERSION}
 
