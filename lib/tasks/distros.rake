@@ -33,38 +33,107 @@ namespace :distros do
     if missing.empty?
       puts "All distro names from versions are present in distros table!"
     else
-      with_guess = missing.select { |name, _count| Distro.guess_docker_image_from_name(name).present? }
-      without_guess = missing.select { |name, _count| Distro.guess_docker_image_from_name(name).nil? }
+      # Extract distro details from SBOM data
+      grouped_distros = {}
 
-      if with_guess.any?
-        puts "Found #{with_guess.count} missing distro(s) on Docker Hub:"
-        puts ""
-        puts "%-50s %-8s %s" % ["Distro Name", "Count", "Docker Hub Image"]
-        puts "-" * 100
+      missing.each do |distro_name, count|
+        # Find a version with SBOM data for this distro
+        version = Version.joins(:sbom_record).where(distro_name: distro_name).first
+        next unless version&.sbom_data
 
-        with_guess.each do |name, count|
-          guessed_image = Distro.guess_docker_image_from_name(name)
-          puts "%-50s %-8s %s" % [name, count, guessed_image]
+        distro_data = version.sbom_data['distro']
+        next unless distro_data
+
+        # Extract fields from distro data
+        pretty_name = distro_data['prettyName']
+        name = distro_data['name']
+        id_field = distro_data['id']
+        version_id = distro_data['versionID']
+        variant_id = distro_data['variantID']
+
+        # Group by NAME (the base distro name, not PRETTY_NAME which includes version)
+        base_name = name || pretty_name
+        next unless base_name
+
+        grouped_distros[base_name] ||= {}
+
+        # Sub-group by variant_id if present
+        variant_key = variant_id || "(no variant)"
+        grouped_distros[base_name][variant_key] ||= []
+
+        # Generate suggested filename with version
+        base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+        version_part = (version_id || 'unknown').gsub(/[^a-z0-9.]+/, '-').gsub(/^-|-$/, '')
+
+        # Build filename: base/version or base/variant/version
+        if variant_id.present?
+          # Has variant: fedora/aurora/40
+          variant_part = variant_id.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+          filename = "#{base_filename}/#{variant_part}/#{version_part}"
+        else
+          # No variant: alpine/3.19.0
+          filename = "#{base_filename}/#{version_part}"
         end
-        puts ""
-        puts "Run 'rake distros:extract_missing' to extract os-release files from these images"
-        puts ""
+
+        # Get the Docker image reference
+        image_name = "#{version.package.name}:#{version.number}"
+
+        grouped_distros[base_name][variant_key] << {
+          version_id: version_id,
+          count: count,
+          full_name: distro_name,
+          image: image_name,
+          filename: filename
+        }
       end
 
-      if without_guess.any?
-        puts "Found #{without_guess.count} missing distro(s) not on Docker Hub:"
+      if grouped_distros.empty?
+        puts "No SBOM data available for missing distros"
+      else
+        puts "Found #{grouped_distros.size} base distro(s) with missing os-release files:"
         puts ""
-        without_guess.each do |name, count|
-          puts "  #{name} (#{count} versions)"
-        end
-        puts ""
-      end
 
-      puts "These could be contributed to: https://github.com/which-distro/os-release"
+        grouped_distros.sort.each do |base_name, variants|
+          puts "#{base_name}:"
+
+          # Check if we have actual variants or just the "(no variant)" group
+          has_variants = variants.keys.any? { |k| k != "(no variant)" }
+
+          if has_variants
+            # Display with variant grouping
+            variants.sort.each do |variant_id, entries|
+              if variant_id == "(no variant)"
+                puts "  (no variant):"
+              else
+                puts "  variant: #{variant_id}"
+              end
+
+              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                version_display = entry[:version_id] || "(no version)"
+                puts "    - version: #{version_display} (#{entry[:count]} images)"
+                puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+              end
+            end
+          else
+            # No variants, just list versions directly
+            entries = variants.values.flatten
+            entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+              version_display = entry[:version_id] || "(no version)"
+              puts "  - version: #{version_display} (#{entry[:count]} images)"
+              puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+            end
+          end
+
+          puts ""
+        end
+
+        puts "Copy the docker commands above to extract os-release files locally."
+        puts "Then contribute to: https://github.com/which-distro/os-release"
+      end
     end
   end
 
-  desc "Extract os-release files from missing distros using guessed Docker images"
+  desc "Extract os-release files from missing distros using actual Docker images"
   task extract_missing: :environment do
     missing = Distro.missing_from_versions
 
@@ -73,52 +142,71 @@ namespace :distros do
       exit 0
     end
 
-    require 'tmpdir'
+    extracted_count = 0
 
-    Dir.mktmpdir do |tmp_dir|
-      output_dir = File.join(tmp_dir, 'os-release-contributions')
-      FileUtils.mkdir_p(output_dir)
+    missing.each do |distro_name, count|
+      # Find a version with this distro_name that has SBOM data
+      version = Version.joins(:sbom_record).where(distro_name: distro_name).first
+      next unless version
 
-      missing.each do |name, count|
-        guessed_image = Distro.guess_docker_image_from_name(name)
-        next unless guessed_image
+      distro_data = version.sbom_data&.dig('distro')
+      next unless distro_data
 
-        puts "Processing: #{name} (#{count} versions)"
-        puts "  Guessed image: #{guessed_image}"
+      image_name = "#{version.package.name}:#{version.number}"
+      puts "\n" + "="*80
+      puts "Processing: #{distro_name} (#{count} images)"
+      puts "Using image: #{image_name}"
+      puts "-"*80
 
-        begin
-          # Pull the image
-          puts "  Pulling image..."
-          system('docker', 'pull', guessed_image, out: File::NULL, err: File::NULL)
+      begin
+        # Extract os-release using the version's method
+        os_release_content = version.extract_os_release
 
-          # Extract os-release
-          puts "  Extracting /etc/os-release..."
-          output, status = Open3.capture2('docker', 'run', '--rm', guessed_image, 'cat', '/etc/os-release')
+        if os_release_content.present?
+          # Parse to get fields for filename
+          attributes = Distro.parse_os_release(os_release_content)
 
-          if status.success? && output.present?
-            # Create filename from distro name
-            filename = name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
-            filepath = File.join(output_dir, filename)
+          # Create filename based on distro structure
+          # Format: distro-name or distro-name-variant for variants
+          base = (attributes[:id_field] || attributes[:name] || distro_name).downcase.gsub(/[^a-z0-9]+/, '-')
 
-            File.write(filepath, output)
-            puts "  ✓ Saved to: #{filepath}"
-            puts ""
+          filename = if attributes[:variant_id].present?
+            # Has variant: e.g., fedora-coreos
+            "#{base}-#{attributes[:variant_id].downcase.gsub(/[^a-z0-9]+/, '-')}"
           else
-            puts "  ✗ Failed to extract os-release"
-            puts ""
+            # No variant: just use base name
+            base
           end
-        rescue => e
-          puts "  ✗ Error: #{e.message}"
-          puts ""
-        end
-      end
 
-      if Dir.glob(File.join(output_dir, '*')).any?
-        puts "Extracted os-release files saved to: #{output_dir}"
-        puts "Review these files and consider contributing to https://github.com/which-distro/os-release"
-      else
-        puts "No os-release files were extracted successfully"
+          # Remove leading/trailing dashes
+          filename = filename.gsub(/^-|-$/, '')
+
+          extracted_count += 1
+
+          puts "Suggested filename: #{filename}"
+          puts ""
+          puts "Content:"
+          puts os_release_content
+          puts ""
+        else
+          puts "Failed to extract os-release"
+        end
+      rescue => e
+        puts "Error: #{e.message}"
       end
+    end
+
+    puts "\n" + "="*80
+    if extracted_count > 0
+      puts "Extracted #{extracted_count} os-release file(s)"
+      puts ""
+      puts "Next steps:"
+      puts "1. Copy the content above for each file"
+      puts "2. Fork https://github.com/which-distro/os-release"
+      puts "3. Create files with the suggested filenames in your fork"
+      puts "4. Submit a pull request"
+    else
+      puts "No os-release files were extracted successfully"
     end
   end
 end
