@@ -70,7 +70,7 @@ class Package < ApplicationRecord
   end
 
   def self.resync_outdated
-    Package.active.order('last_synced_at ASC').limit(300).each(&:sync_async)
+    Package.active.order('last_synced_at ASC').limit(400).each(&:sync_async)
   end
 
   def packages_api_url
