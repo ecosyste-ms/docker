@@ -34,8 +34,6 @@ namespace :distros do
       puts "All distro names from versions are present in distros table!"
     else
       # Extract distro details from SBOM data
-      grouped_distros = {}
-
       # First pass: collect all unique filenames with their images
       files_map = {}
 
@@ -64,18 +62,19 @@ namespace :distros do
         next if base_name.length > 100  # Skip suspiciously long names
 
         # Generate suggested filename with version
-        base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+        # Replace non-alphabetic characters with underscore
+        base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
 
         # Limit base_filename length
         base_filename = base_filename[0..50] if base_filename.length > 50
 
-        version_part = (version_id || 'unknown').to_s.gsub(/[^a-z0-9.]+/, '-').gsub(/^-|-$/, '')
+        version_part = (version_id || 'unknown').to_s.gsub(/[^a-z0-9.]+/, '_').gsub(/^_|_$/, '')
         version_part = version_part[0..30] if version_part.length > 30
 
         # Build filename: base/version or base/variant/version
         if variant_id.present?
           # Has variant: fedora/aurora/40
-          variant_part = variant_id.to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+          variant_part = variant_id.to_s.downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
           variant_part = variant_part[0..30] if variant_part.length > 30
           filename = "#{base_filename}/#{variant_part}/#{version_part}"
         else
@@ -102,54 +101,109 @@ namespace :distros do
       end
 
       # Second pass: organize by base_name and variant for display
+      # Also separate into "existing distro, missing version" vs "completely new distro"
+      existing_distros = {}
+      new_distros = {}
+
+      # Get list of existing distro base names from the database
+      existing_distro_names = Distro.distinct.pluck(:name).compact.map(&:downcase)
+
       files_map.values.each do |entry|
         base_name = entry[:base_name]
         variant_id = entry[:variant_id]
         variant_key = variant_id || "(no variant)"
 
-        grouped_distros[base_name] ||= {}
-        grouped_distros[base_name][variant_key] ||= {}
-        grouped_distros[base_name][variant_key][entry[:filename]] = entry
+        # Check if we have this distro already (by name match)
+        target = existing_distro_names.include?(base_name.downcase) ? existing_distros : new_distros
+
+        target[base_name] ||= {}
+        target[base_name][variant_key] ||= {}
+        target[base_name][variant_key][entry[:filename]] = entry
       end
 
-      if grouped_distros.empty?
+      if existing_distros.empty? && new_distros.empty?
         puts "No SBOM data available for missing distros"
       else
-        puts "Found #{grouped_distros.size} base distro(s) with missing os-release files:"
-        puts ""
-
-        grouped_distros.sort.each do |base_name, variants|
-          puts "#{base_name}:"
-
-          # Check if we have actual variants or just the "(no variant)" group
-          has_variants = variants.keys.any? { |k| k != "(no variant)" }
-
-          if has_variants
-            # Display with variant grouping
-            variants.sort.each do |variant_id, entries_hash|
-              if variant_id == "(no variant)"
-                puts "  (no variant):"
-              else
-                puts "  variant: #{variant_id}"
-              end
-
-              entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
-                version_display = entry[:version_id] || "(no version)"
-                puts "    - version: #{version_display} (#{entry[:count]} images)"
-                puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
-              end
-            end
-          else
-            # No variants, just list versions directly
-            entries = variants.values.flat_map(&:values)
-            entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
-              version_display = entry[:version_id] || "(no version)"
-              puts "  - version: #{version_display} (#{entry[:count]} images)"
-              puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
-            end
-          end
-
+        if existing_distros.any?
+          puts "="*80
+          puts "MISSING VERSIONS FOR EXISTING DISTROS (#{existing_distros.size} distros)"
+          puts "="*80
           puts ""
+
+          existing_distros.sort.each do |base_name, variants|
+            puts "#{base_name}:"
+
+            # Check if we have actual variants or just the "(no variant)" group
+            has_variants = variants.keys.any? { |k| k != "(no variant)" }
+
+            if has_variants
+              # Display with variant grouping
+              variants.sort.each do |variant_id, entries_hash|
+                if variant_id == "(no variant)"
+                  puts "  (no variant):"
+                else
+                  puts "  variant: #{variant_id}"
+                end
+
+                entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                  version_display = entry[:version_id] || "(no version)"
+                  puts "    - version: #{version_display} (#{entry[:count]} images)"
+                  puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                end
+              end
+            else
+              # No variants, just list versions directly
+              entries = variants.values.flat_map(&:values)
+              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                version_display = entry[:version_id] || "(no version)"
+                puts "  - version: #{version_display} (#{entry[:count]} images)"
+                puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+              end
+            end
+
+            puts ""
+          end
+        end
+
+        if new_distros.any?
+          puts "="*80
+          puts "COMPLETELY NEW DISTROS (#{new_distros.size} distros)"
+          puts "="*80
+          puts ""
+
+          new_distros.sort.each do |base_name, variants|
+            puts "#{base_name}:"
+
+            # Check if we have actual variants or just the "(no variant)" group
+            has_variants = variants.keys.any? { |k| k != "(no variant)" }
+
+            if has_variants
+              # Display with variant grouping
+              variants.sort.each do |variant_id, entries_hash|
+                if variant_id == "(no variant)"
+                  puts "  (no variant):"
+                else
+                  puts "  variant: #{variant_id}"
+                end
+
+                entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                  version_display = entry[:version_id] || "(no version)"
+                  puts "    - version: #{version_display} (#{entry[:count]} images)"
+                  puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                end
+              end
+            else
+              # No variants, just list versions directly
+              entries = variants.values.flat_map(&:values)
+              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                version_display = entry[:version_id] || "(no version)"
+                puts "  - version: #{version_display} (#{entry[:count]} images)"
+                puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+              end
+            end
+
+            puts ""
+          end
         end
 
         puts "Copy the docker commands above to extract os-release files locally."
