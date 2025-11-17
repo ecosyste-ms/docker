@@ -51,24 +51,42 @@ namespace :distros do
         version_id = distro_data['versionID']
         variant_id = distro_data['variantID']
 
+        # Skip if name contains escape sequences or looks malformed
+        next if name&.include?('\n') || pretty_name&.include?('\n')
+        next if name&.include?('"') || pretty_name&.include?('"')
+
         # Group by NAME (the base distro name, not PRETTY_NAME which includes version)
         base_name = name || pretty_name
         next unless base_name
+        next if base_name.length > 100  # Skip suspiciously long names
 
         grouped_distros[base_name] ||= {}
 
         # Sub-group by variant_id if present
         variant_key = variant_id || "(no variant)"
-        grouped_distros[base_name][variant_key] ||= []
+
+        # Create a unique key that combines variant and version to detect duplicates
+        version_key = "#{variant_key}|#{version_id}|#{count}"
+
+        grouped_distros[base_name][variant_key] ||= {}
+
+        # Skip if we already have this exact version/variant/count combo
+        next if grouped_distros[base_name][variant_key][version_key]
 
         # Generate suggested filename with version
         base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
-        version_part = (version_id || 'unknown').gsub(/[^a-z0-9.]+/, '-').gsub(/^-|-$/, '')
+
+        # Limit base_filename length
+        base_filename = base_filename[0..50] if base_filename.length > 50
+
+        version_part = (version_id || 'unknown').to_s.gsub(/[^a-z0-9.]+/, '-').gsub(/^-|-$/, '')
+        version_part = version_part[0..30] if version_part.length > 30
 
         # Build filename: base/version or base/variant/version
         if variant_id.present?
           # Has variant: fedora/aurora/40
-          variant_part = variant_id.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+          variant_part = variant_id.to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+          variant_part = variant_part[0..30] if variant_part.length > 30
           filename = "#{base_filename}/#{variant_part}/#{version_part}"
         else
           # No variant: alpine/3.19.0
@@ -78,7 +96,7 @@ namespace :distros do
         # Get the Docker image reference
         image_name = "#{version.package.name}:#{version.number}"
 
-        grouped_distros[base_name][variant_key] << {
+        grouped_distros[base_name][variant_key][version_key] = {
           version_id: version_id,
           count: count,
           full_name: distro_name,
@@ -101,14 +119,14 @@ namespace :distros do
 
           if has_variants
             # Display with variant grouping
-            variants.sort.each do |variant_id, entries|
+            variants.sort.each do |variant_id, entries_hash|
               if variant_id == "(no variant)"
                 puts "  (no variant):"
               else
                 puts "  variant: #{variant_id}"
               end
 
-              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+              entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
                 version_display = entry[:version_id] || "(no version)"
                 puts "    - version: #{version_display} (#{entry[:count]} images)"
                 puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
@@ -116,7 +134,7 @@ namespace :distros do
             end
           else
             # No variants, just list versions directly
-            entries = variants.values.flatten
+            entries = variants.values.flat_map(&:values)
             entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
               version_display = entry[:version_id] || "(no version)"
               puts "  - version: #{version_display} (#{entry[:count]} images)"
