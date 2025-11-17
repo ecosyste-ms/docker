@@ -36,6 +36,9 @@ namespace :distros do
       # Extract distro details from SBOM data
       grouped_distros = {}
 
+      # First pass: collect all unique filenames with their images
+      files_map = {}
+
       missing.each do |distro_name, count|
         # Find a version with SBOM data for this distro
         version = Version.joins(:sbom_record).where(distro_name: distro_name).first
@@ -60,19 +63,6 @@ namespace :distros do
         next unless base_name
         next if base_name.length > 100  # Skip suspiciously long names
 
-        grouped_distros[base_name] ||= {}
-
-        # Sub-group by variant_id if present
-        variant_key = variant_id || "(no variant)"
-
-        # Create a unique key that combines variant and version to detect duplicates
-        version_key = "#{variant_key}|#{version_id}|#{count}"
-
-        grouped_distros[base_name][variant_key] ||= {}
-
-        # Skip if we already have this exact version/variant/count combo
-        next if grouped_distros[base_name][variant_key][version_key]
-
         # Generate suggested filename with version
         base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
 
@@ -96,13 +86,30 @@ namespace :distros do
         # Get the Docker image reference
         image_name = "#{version.package.name}:#{version.number}"
 
-        grouped_distros[base_name][variant_key][version_key] = {
-          version_id: version_id,
-          count: count,
-          full_name: distro_name,
-          image: image_name,
-          filename: filename
-        }
+        # Use filename as the unique key - only store first occurrence
+        if files_map[filename]
+          files_map[filename][:count] += count
+        else
+          files_map[filename] = {
+            base_name: base_name,
+            version_id: version_id,
+            variant_id: variant_id,
+            count: count,
+            image: image_name,
+            filename: filename
+          }
+        end
+      end
+
+      # Second pass: organize by base_name and variant for display
+      files_map.values.each do |entry|
+        base_name = entry[:base_name]
+        variant_id = entry[:variant_id]
+        variant_key = variant_id || "(no variant)"
+
+        grouped_distros[base_name] ||= {}
+        grouped_distros[base_name][variant_key] ||= {}
+        grouped_distros[base_name][variant_key][entry[:filename]] = entry
       end
 
       if grouped_distros.empty?
