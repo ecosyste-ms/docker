@@ -100,6 +100,7 @@ class DistroTest < ActiveSupport::TestCase
 
   test "grouping_key returns id_field when name matches" do
     distro = Distro.new(
+      slug: "debian-12",
       pretty_name: "Debian GNU/Linux 12 (bookworm)",
       name: "Debian GNU/Linux",
       id_field: "debian"
@@ -623,5 +624,200 @@ class DistroTest < ActiveSupport::TestCase
 
   test "guess_docker_image_from_name returns nil for unknown pattern" do
     assert_nil Distro.guess_docker_image_from_name("Custom Unknown Distro 1.0")
+  end
+
+  # Grouping tests
+  test "grouping_key extracts base name from slug" do
+    distro = Distro.new(slug: "ubuntu-22-04")
+    assert_equal "ubuntu", distro.grouping_key
+  end
+
+  test "grouping_key handles multi-part names like ubuntu-kylin" do
+    distro = Distro.new(slug: "ubuntu-kylin-22-04")
+    assert_equal "ubuntu-kylin", distro.grouping_key
+  end
+
+  test "grouping_key handles variant names like fedora-container" do
+    distro = Distro.new(slug: "fedora-container-39")
+    assert_equal "fedora-container", distro.grouping_key
+  end
+
+  test "grouping_key handles bodhi separately from ubuntu" do
+    bodhi = Distro.new(slug: "bodhi-20-04")
+    ubuntu = Distro.new(slug: "ubuntu-20-04")
+
+    assert_equal "bodhi", bodhi.grouping_key
+    assert_equal "ubuntu", ubuntu.grouping_key
+    assert_not_equal bodhi.grouping_key, ubuntu.grouping_key
+  end
+
+  test "group_display_name titleizes the grouping key" do
+    assert_equal "Ubuntu", Distro.group_display_name("ubuntu", [])
+    assert_equal "Ubuntu Kylin", Distro.group_display_name("ubuntu-kylin", [])
+    assert_equal "Fedora Container", Distro.group_display_name("fedora-container", [])
+    assert_equal "Bodhi", Distro.group_display_name("bodhi", [])
+  end
+
+  test "group_display_name does not show duplicated names" do
+    debian_name = Distro.group_display_name("debian", [])
+    assert_equal "Debian", debian_name
+    refute_includes debian_name, "Debian Debian"
+  end
+
+  test "group_display_name does not include Discontinued prefix" do
+    centos_name = Distro.group_display_name("centos", [])
+    assert_equal "Centos", centos_name
+    refute_includes centos_name, "Discontinued"
+  end
+
+  test "bodhi distro does not show as Ubuntu" do
+    bodhi = Distro.new(slug: "bodhi-20-04", name: "Ubuntu", id_field: "ubuntu")
+    ubuntu = Distro.new(slug: "ubuntu-20-04", name: "Ubuntu", id_field: "ubuntu")
+
+    assert_not_equal bodhi.grouping_key, ubuntu.grouping_key
+    assert_equal "Bodhi", Distro.group_display_name(bodhi.grouping_key, [bodhi])
+  end
+
+  test "discontinued distros should not have discontinued in slug" do
+    centos = Distro.new(slug: "centos-8", discontinued: true)
+    assert_equal "centos", centos.grouping_key
+    refute_includes centos.slug, "discontinued"
+  end
+
+  # Import tests
+  test "parse_and_create_distro generates correct slug from file path" do
+    Dir.mktmpdir do |dir|
+      os_release_dir = File.join(dir, 'os-release')
+      FileUtils.mkdir_p(os_release_dir)
+
+      ubuntu_dir = File.join(os_release_dir, 'ubuntu')
+      FileUtils.mkdir_p(ubuntu_dir)
+      File.write(File.join(ubuntu_dir, '22.04'), <<~OSRELEASE)
+        NAME="Ubuntu"
+        PRETTY_NAME="Ubuntu 22.04 LTS"
+        VERSION_ID="22.04"
+        ID=ubuntu
+      OSRELEASE
+
+      Distro.parse_and_create_distro(File.join(ubuntu_dir, '22.04'))
+      ubuntu = Distro.find_by(slug: 'ubuntu-22-04')
+
+      assert_not_nil ubuntu
+      assert_equal 'ubuntu-22-04', ubuntu.slug
+      assert_equal 'Ubuntu', ubuntu.name
+      assert_equal '22.04', ubuntu.version_id
+      assert_equal false, ubuntu.discontinued
+    end
+  end
+
+  test "parse_and_create_distro handles discontinued distros" do
+    Dir.mktmpdir do |dir|
+      os_release_dir = File.join(dir, 'os-release')
+      discontinued_dir = File.join(os_release_dir, 'discontinued', 'centos')
+      FileUtils.mkdir_p(discontinued_dir)
+
+      File.write(File.join(discontinued_dir, '8'), <<~OSRELEASE)
+        NAME="CentOS Linux"
+        PRETTY_NAME="CentOS Linux 8"
+        VERSION_ID="8"
+        ID=centos
+      OSRELEASE
+
+      Distro.parse_and_create_distro(File.join(discontinued_dir, '8'))
+      centos = Distro.find_by(slug: 'centos-8')
+
+      assert_not_nil centos
+      assert_equal 'centos-8', centos.slug
+      assert_equal true, centos.discontinued
+      refute_includes centos.slug, 'discontinued'
+    end
+  end
+
+  test "parse_and_create_distro handles variants" do
+    Dir.mktmpdir do |dir|
+      os_release_dir = File.join(dir, 'os-release')
+      fedora_dir = File.join(os_release_dir, 'fedora', 'container')
+      FileUtils.mkdir_p(fedora_dir)
+
+      File.write(File.join(fedora_dir, '39'), <<~OSRELEASE)
+        NAME="Fedora Linux"
+        PRETTY_NAME="Fedora Linux 39"
+        VERSION_ID="39"
+        ID=fedora
+        VARIANT="Container"
+        VARIANT_ID="container"
+      OSRELEASE
+
+      Distro.parse_and_create_distro(File.join(fedora_dir, '39'))
+      fedora = Distro.find_by(slug: 'fedora-container-39')
+
+      assert_not_nil fedora
+      assert_equal 'fedora-container-39', fedora.slug
+      assert_equal 'Fedora Linux', fedora.name
+      assert_equal '39', fedora.version_id
+      assert_equal 'container', fedora.variant_id
+    end
+  end
+
+  test "parse_and_create_distro handles ubuntu kylin separately from ubuntu" do
+    Dir.mktmpdir do |dir|
+      os_release_dir = File.join(dir, 'os-release')
+
+      ubuntu_kylin_dir = File.join(os_release_dir, 'ubuntu_kylin')
+      FileUtils.mkdir_p(ubuntu_kylin_dir)
+      File.write(File.join(ubuntu_kylin_dir, '22.04'), <<~OSRELEASE)
+        NAME="Ubuntu Kylin"
+        PRETTY_NAME="Ubuntu 22.04 LTS"
+        VERSION_ID="22.04"
+        ID=ubuntu
+      OSRELEASE
+
+      ubuntu_dir = File.join(os_release_dir, 'ubuntu')
+      FileUtils.mkdir_p(ubuntu_dir)
+      File.write(File.join(ubuntu_dir, '22.04'), <<~OSRELEASE)
+        NAME="Ubuntu"
+        PRETTY_NAME="Ubuntu 22.04 LTS"
+        VERSION_ID="22.04"
+        ID=ubuntu
+      OSRELEASE
+
+      Distro.parse_and_create_distro(File.join(ubuntu_kylin_dir, '22.04'))
+      Distro.parse_and_create_distro(File.join(ubuntu_dir, '22.04'))
+
+      ubuntu_kylin = Distro.find_by(slug: 'ubuntu-kylin-22-04')
+      ubuntu = Distro.find_by(slug: 'ubuntu-22-04')
+
+      assert_not_nil ubuntu_kylin
+      assert_not_nil ubuntu
+      assert_not_equal ubuntu_kylin.slug, ubuntu.slug
+      assert_equal 'ubuntu-kylin', ubuntu_kylin.grouping_key
+      assert_equal 'ubuntu', ubuntu.grouping_key
+    end
+  end
+
+  # Sync tests
+  test "sync_from_github removes old distros with bad slugs" do
+    Distro.create!(
+      slug: 'discontinued-centos-8',
+      pretty_name: 'CentOS Linux 8',
+      name: 'CentOS Linux',
+      id_field: 'centos',
+      version_id: '8'
+    )
+
+    Distro.sync_from_github
+
+    assert_nil Distro.find_by(slug: 'discontinued-centos-8')
+    assert_not_nil Distro.find_by(slug: 'centos-8')
+  end
+
+  test "sync_from_github handles debian debian file correctly" do
+    Distro.sync_from_github
+
+    assert_nil Distro.find_by(slug: 'debian-debian')
+
+    debian_unstable = Distro.find_by(slug: 'debian-unstable')
+    assert_not_nil debian_unstable
+    assert_equal 'debian', debian_unstable.grouping_key
   end
 end

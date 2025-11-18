@@ -9,6 +9,7 @@ FactoryBot.define do
     total_downloads { 0 }
 
     trait :alpine do
+      slug { "alpine-3-17" }
       pretty_name { "Alpine Linux v3.17" }
       name { "Alpine Linux" }
       id_field { "alpine" }
@@ -16,6 +17,7 @@ FactoryBot.define do
     end
 
     trait :debian do
+      slug { "debian-12" }
       pretty_name { "Debian GNU/Linux 12 (bookworm)" }
       name { "Debian GNU/Linux" }
       id_field { "debian" }
@@ -25,6 +27,7 @@ FactoryBot.define do
     end
 
     trait :ubuntu do
+      slug { "ubuntu-22-04" }
       pretty_name { "Ubuntu 22.04.1 LTS" }
       name { "Ubuntu" }
       id_field { "ubuntu" }
@@ -36,6 +39,7 @@ FactoryBot.define do
     end
 
     trait :ubuntu_focal do
+      slug { "ubuntu-20-04" }
       pretty_name { "Ubuntu 20.04 LTS" }
       name { "Ubuntu" }
       id_field { "ubuntu" }

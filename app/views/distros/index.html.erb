@@ -21,4 +21,19 @@
     <h3 class='mt-4'>Other Distributions</h3>
     <%= render @ungrouped_distros %>
   <% end %>
+
+  <% if @discontinued_groups.any? %>
+    <h3 class='mt-5 mb-3'>
+      Discontinued Distributions
+      <small class='text-muted'>
+        <%= number_with_delimiter @discontinued_groups.values.flatten.count %>
+      </small>
+    </h3>
+    <p class='text-muted'>
+      These distributions are no longer maintained or have reached end-of-life.
+    </p>
+    <% @discontinued_groups.each do |grouping_key, distros| %>
+      <%= render partial: 'distro_group', locals: { grouping_key: grouping_key, distros: distros } %>
+    <% end %>
+  <% end %>
 </div>

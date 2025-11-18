@@ -1,7 +1,7 @@
 <div class="card mb-3">
   <div class="card-body">
     <h5 class="card-title">
-      <%= grouping_key.titleize %>
+      <%= Distro.group_display_name(grouping_key, distros) %>
       <% if distros.first.id_field.present? %>
         <small class='text-muted'>
           (<%= distros.first.id_field %>)

@@ -84,8 +84,10 @@ class DistrosControllerTest < ActionDispatch::IntegrationTest
 
     should "handle distros without id_field" do
       distro_no_id = Distro.create!(
+        slug: "unknown-1-0",
         pretty_name: "Unknown Distro",
-        name: "Unknown"
+        name: "Unknown",
+        version_id: "1.0"
       )
 
       get distros_path

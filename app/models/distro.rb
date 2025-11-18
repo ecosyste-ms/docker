@@ -11,25 +11,50 @@ class Distro < ApplicationRecord
   end
 
   def grouping_key
-    # Use the slug's first component (distro family from directory structure)
+    # Prefer using slug-based grouping (from directory structure)
     # This correctly groups distros based on the os-release repo structure
     # e.g., bodhi-20-04 → bodhi, ubuntu-22-04 → ubuntu, ubuntu-kylin-22-04 → ubuntu-kylin
-    return nil if slug.blank?
+    if slug.present?
+      # Extract first component from slug (everything before first version-like pattern)
+      # Handle patterns like: ubuntu-22-04, fedora-container-39, ubuntu-kylin-22-04, debian-unstable
+      parts = slug.split('-')
 
-    # Extract first component from slug (everything before first version-like pattern)
-    # Handle patterns like: ubuntu-22-04, fedora-container-39, ubuntu-kylin-22-04
-    parts = slug.split('-')
+      # Find where the version starts (first numeric part or special keywords like unstable/rolling)
+      special_keywords = ['unstable', 'rolling', 'sid', 'rawhide']
+      version_idx = parts.index { |p| p.match?(/^\d/) || special_keywords.include?(p) }
 
-    # Find where the version starts (first numeric part)
-    version_idx = parts.index { |p| p.match?(/^\d/) }
-
-    if version_idx && version_idx > 0
-      # Take everything before the version
-      parts[0...version_idx].join('-')
-    else
-      # No version found, use whole slug
-      slug
+      if version_idx && version_idx > 0
+        # Take everything before the version
+        return parts[0...version_idx].join('-')
+      else
+        # No version found, use whole slug
+        return slug
+      end
     end
+
+    # Fallback for distros without slugs (backwards compatibility)
+    return nil if id_field.blank? && name.blank?
+
+    if id_field.present? && name.present?
+      normalized_name = name.downcase.gsub(/[^a-z0-9]/, '')
+      normalized_id = id_field.downcase.gsub(/[^a-z0-9]/, '')
+
+      if normalized_name == normalized_id
+        id_field.downcase
+      else
+        name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+      end
+    elsif id_field.present?
+      id_field.downcase
+    else
+      name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+    end
+  end
+
+  def self.group_display_name(grouping_key, distros)
+    # Get a nice display name for a group based on grouping_key
+    # Use the grouping_key titleized, which comes from the directory structure
+    grouping_key.titleize
   end
 
   def display_name
@@ -218,19 +243,54 @@ class Distro < ApplicationRecord
       # Clone the repository
       system('git', 'clone', '--depth', '1', 'https://github.com/which-distro/os-release.git', repo_path, exception: true)
 
+      # Track valid slugs from the repo
+      valid_slugs = Set.new
+
       # Find all os-release files
       os_release_files = Dir.glob(File.join(repo_path, '**', '*')).select do |file|
         File.file?(file) && !file.include?('.git')
       end
 
       os_release_files.each do |file_path|
+        slug = extract_slug_from_path(file_path, repo_path)
+        valid_slugs << slug if slug
         parse_and_create_distro(file_path)
+      end
+
+      # Remove distros that are no longer in the repository
+      all_slugs = Distro.pluck(:slug)
+      orphaned_slugs = all_slugs - valid_slugs.to_a
+
+      if orphaned_slugs.any?
+        Distro.where(slug: orphaned_slugs).delete_all
       end
 
       # Update counts after syncing
       update_all_versions_counts
       update_all_total_downloads
     end
+  end
+
+  def self.extract_slug_from_path(file_path, repo_path)
+    path_parts = file_path.split(File::SEPARATOR)
+    os_release_idx = path_parts.rindex('os-release')
+
+    return nil unless os_release_idx && os_release_idx < path_parts.length - 1
+
+    relative_parts = path_parts[(os_release_idx + 1)..-1]
+
+    # Remove 'discontinued' prefix if present
+    relative_parts = relative_parts[1..-1] if relative_parts.first == 'discontinued'
+
+    # Handle case where filename matches directory name (e.g., debian/debian)
+    # This indicates a special version (usually rolling/unstable)
+    # Append "unstable" or "rolling" to make it unique
+    if relative_parts.length == 2 && relative_parts[0] == relative_parts[1]
+      relative_parts = [relative_parts[0], 'unstable']
+    end
+
+    # Build slug from directory structure
+    relative_parts.join('-').downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
   end
 
   def self.parse_and_create_distro(file_path)
@@ -246,23 +306,18 @@ class Distro < ApplicationRecord
     # Skip if no pretty_name (required field)
     return unless attributes[:pretty_name].present?
 
-    # Generate slug from file path structure instead of pretty_name
-    # Path structure: .../os-release/ubuntu/22.04 or .../os-release/ubuntu_kylin/22.04
-    # Extract the distro directory name and version from the path
-    path_parts = file_path.split(File::SEPARATOR)
+    # Generate slug using the same logic as extract_slug_from_path
+    slug = extract_slug_from_path(file_path, nil)
 
-    # Find the index of 'os-release' directory
+    # Determine if discontinued from file path
+    path_parts = file_path.split(File::SEPARATOR)
     os_release_idx = path_parts.rindex('os-release')
 
     if os_release_idx && os_release_idx < path_parts.length - 1
-      # Get path parts after 'os-release' directory
       relative_parts = path_parts[(os_release_idx + 1)..-1]
-
-      # Build slug from directory structure: distro/variant/version or distro/version
-      slug = relative_parts.join('-').downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+      attributes[:discontinued] = relative_parts.first == 'discontinued'
     else
-      # Fallback to pretty_name if we can't parse the path
-      slug = attributes[:pretty_name].to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+      attributes[:discontinued] = false
     end
 
     # Find or create by slug
