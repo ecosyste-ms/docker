@@ -534,20 +534,40 @@ class DistroTest < ActiveSupport::TestCase
 
   test "missing_from_versions finds distros in versions but not in distros table" do
     # Create a distro that exists
-    Distro.create!(pretty_name: "Ubuntu 22.04 LTS")
+    Distro.create!(
+      slug: 'ubuntu-22-04',
+      pretty_name: "Ubuntu 22.04 LTS",
+      id_field: 'ubuntu',
+      version_id: '22.04'
+    )
 
     # Create versions with various distro names
     package = Package.create!(name: "test/package")
 
-    # This one has matching distro
+    # This one has matching distro (exact match)
     Version.create!(package: package, number: "1.0.0", distro_name: "Ubuntu 22.04 LTS")
     Version.create!(package: package, number: "1.0.1", distro_name: "Ubuntu 22.04 LTS")
 
-    # These don't have matching distros
-    Version.create!(package: package, number: "2.0.0", distro_name: "Debian GNU/Linux 12 (bookworm)")
-    Version.create!(package: package, number: "2.0.1", distro_name: "Debian GNU/Linux 12 (bookworm)")
-    Version.create!(package: package, number: "2.0.2", distro_name: "Debian GNU/Linux 12 (bookworm)")
-    Version.create!(package: package, number: "3.0.0", distro_name: "Alpine Linux v3.17")
+    # These don't have matching distros - need SBOM data
+    debian_v1 = Version.create!(package: package, number: "2.0.0", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    debian_v1.create_sbom_record!(data: {
+      'distro' => { 'id' => 'debian', 'versionID' => '12', 'prettyName' => 'Debian GNU/Linux 12 (bookworm)' }
+    })
+
+    debian_v2 = Version.create!(package: package, number: "2.0.1", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    debian_v2.create_sbom_record!(data: {
+      'distro' => { 'id' => 'debian', 'versionID' => '12', 'prettyName' => 'Debian GNU/Linux 12 (bookworm)' }
+    })
+
+    debian_v3 = Version.create!(package: package, number: "2.0.2", distro_name: "Debian GNU/Linux 12 (bookworm)")
+    debian_v3.create_sbom_record!(data: {
+      'distro' => { 'id' => 'debian', 'versionID' => '12', 'prettyName' => 'Debian GNU/Linux 12 (bookworm)' }
+    })
+
+    alpine_v = Version.create!(package: package, number: "3.0.0", distro_name: "Alpine Linux v3.17")
+    alpine_v.create_sbom_record!(data: {
+      'distro' => { 'id' => 'alpine', 'versionID' => '3.17', 'prettyName' => 'Alpine Linux v3.17' }
+    })
 
     missing = Distro.missing_from_versions
 
@@ -852,5 +872,30 @@ class DistroTest < ActiveSupport::TestCase
     # Ubuntu 22.04.1 LTS should NOT be in missing because it matches ubuntu-22-04 by ID + VERSION_ID
     missing_names = missing.map(&:first)
     refute_includes missing_names, 'Ubuntu 22.04.1 LTS'
+  end
+
+  test "missing_from_versions filters out versions with no version_id" do
+    package = Package.create!(name: 'test/unknown')
+
+    sbom_data = {
+      'distro' => {
+        'id' => 'debian',
+        'prettyName' => 'Debian GNU/Linux trixie/sid',
+        'name' => 'Debian GNU/Linux'
+      }
+    }
+
+    version = Version.create!(
+      package: package,
+      number: '1.0',
+      distro_name: 'Debian GNU/Linux trixie/sid'
+    )
+    version.create_sbom_record!(data: sbom_data)
+
+    missing = Distro.missing_from_versions
+
+    # Should not include versions without version_id
+    missing_names = missing.map(&:first)
+    refute_includes missing_names, 'Debian GNU/Linux trixie/sid'
   end
 end

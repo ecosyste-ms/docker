@@ -199,6 +199,9 @@ class Distro < ApplicationRecord
   def self.missing_from_versions
     # Find distro_names in Version table that don't have a matching Distro
     # Check both exact pretty_name match and ID + VERSION_ID match
+    # Filter out entries without version_id (unknown/unstable versions) and non-distros like busybox
+    skip_ids = ['busybox']  # IDs that aren't real distros or don't have os-release
+
     Version.where.not(distro_name: [nil, ''])
            .group(:distro_name)
            .count
@@ -208,16 +211,20 @@ class Distro < ApplicationRecord
 
              # Try ID + VERSION_ID match using a sample version
              version = Version.joins(:sbom_record).find_by(distro_name: distro_name)
-             next false unless version&.sbom_data
+             next true unless version&.sbom_data  # Skip if no SBOM data
 
              distro_data = version.sbom_data['distro']
-             next false unless distro_data
+             next true unless distro_data  # Skip if no distro data
 
              id_field = distro_data['id']
              version_id = distro_data['versionID']
              variant_id = distro_data['variantID']
 
-             next false unless id_field && version_id
+             # Skip entries without version_id (unknown/rolling/unstable versions)
+             next true unless id_field && version_id
+
+             # Skip non-distros like busybox
+             next true if skip_ids.include?(id_field)
 
              # Check if we have a distro with this ID + VERSION_ID
              if variant_id.present?
