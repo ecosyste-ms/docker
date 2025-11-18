@@ -50,9 +50,37 @@ class VersionTest < ActiveSupport::TestCase
     end
 
     context '#distro_record' do
-      should 'find distro by distro_name' do
+      should 'find distro by exact distro_name match' do
         @version.update!(distro_name: 'Ubuntu 22.04.1 LTS')
-        distro = Distro.create!(pretty_name: 'Ubuntu 22.04.1 LTS')
+        distro = Distro.create!(
+          slug: 'ubuntu-22-04',
+          pretty_name: 'Ubuntu 22.04.1 LTS',
+          name: 'Ubuntu',
+          id_field: 'ubuntu',
+          version_id: '22.04'
+        )
+
+        assert_equal distro, @version.distro_record
+      end
+
+      should 'find distro by id and version when pretty_name differs by point release' do
+        sbom_data = {
+          'distro' => {
+            'id' => 'ubuntu',
+            'versionID' => '22.04',
+            'prettyName' => 'Ubuntu 22.04.1 LTS'
+          }
+        }
+        @version.create_sbom_record!(data: sbom_data)
+        @version.update!(distro_name: 'Ubuntu 22.04.1 LTS')
+
+        distro = Distro.create!(
+          slug: 'ubuntu-22-04',
+          pretty_name: 'Ubuntu 22.04 LTS',
+          name: 'Ubuntu',
+          id_field: 'ubuntu',
+          version_id: '22.04'
+        )
 
         assert_equal distro, @version.distro_record
       end

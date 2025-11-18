@@ -25,7 +25,29 @@ class Version < ApplicationRecord
 
   def distro_record
     return nil unless distro_name.present?
-    Distro.find_by(pretty_name: distro_name)
+
+    # Try exact match first
+    distro = Distro.find_by(pretty_name: distro_name)
+    return distro if distro
+
+    # If no exact match and we have SBOM data, try matching on ID + VERSION_ID
+    return nil unless has_sbom?
+
+    distro_data = sbom_data&.dig('distro')
+    return nil unless distro_data
+
+    id_field = distro_data['id']
+    version_id = distro_data['versionID']
+    variant_id = distro_data['variantID']
+
+    return nil unless id_field && version_id
+
+    # Find distro with matching id_field and version_id
+    if variant_id.present?
+      Distro.find_by(id_field: id_field, version_id: version_id, variant_id: variant_id)
+    else
+      Distro.find_by(id_field: id_field, version_id: version_id, variant_id: nil)
+    end
   end
 
   def distro_data
