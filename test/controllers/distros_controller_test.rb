@@ -119,6 +119,53 @@ class DistrosControllerTest < ActionDispatch::IntegrationTest
       assert_includes distro_groups["pengwin"], pengwin
       assert_not_includes distro_groups["debian"], pengwin
     end
+
+    should "display version stats table with Docker images and downloads" do
+      @distro1.update_column(:versions_count, 1500)
+      @distro1.update_column(:total_downloads, 5000000)
+      @distro1b = create(:distro, :ubuntu_focal)
+      @distro1b.update_column(:versions_count, 2000)
+      @distro1b.update_column(:total_downloads, 10000000)
+
+      get distros_path
+
+      assert_response :success
+      assert_includes response.body, "Docker Images"
+      assert_includes response.body, "Downloads"
+      assert_includes response.body, "1,500"
+      assert_includes response.body, "5,000,000"
+      assert_includes response.body, "2,000"
+      assert_includes response.body, "10,000,000"
+    end
+
+    should "display dash for zero values in stats table" do
+      @distro1.update_column(:versions_count, 0)
+      @distro1.update_column(:total_downloads, 0)
+
+      get distros_path
+
+      assert_response :success
+      assert_includes response.body, @distro1.version_id
+    end
+
+    should "sort distros within a group by total_downloads descending" do
+      @distro1.update_column(:total_downloads, 5000000)
+      @distro1b = create(:distro, :ubuntu_focal)
+      @distro1b.update_column(:total_downloads, 10000000)
+      @distro1c = create(:distro, slug: "ubuntu-24-04", pretty_name: "Ubuntu 24.04 LTS", name: "Ubuntu", id_field: "ubuntu", version_id: "24.04", version_codename: "noble")
+      @distro1c.update_column(:total_downloads, 15000000)
+
+      get distros_path
+
+      assert_response :success
+      distro_groups = assigns(:distro_groups)
+      ubuntu_group = distro_groups["ubuntu"]
+
+      assert_equal 3, ubuntu_group.count
+      assert_equal @distro1c, ubuntu_group[0]
+      assert_equal @distro1b, ubuntu_group[1]
+      assert_equal @distro1, ubuntu_group[2]
+    end
   end
 
   context "GET #show" do

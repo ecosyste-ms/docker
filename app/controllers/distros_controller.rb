@@ -14,11 +14,10 @@ class DistrosController < ApplicationController
     # Group active distros by grouping_key
     @distro_groups = active_distros.group_by(&:grouping_key).compact
 
-    # Sort each group's distros by version_id
+    # Sort each group's distros by total_downloads (descending)
     @distro_groups.each do |key, group_distros|
       @distro_groups[key] = group_distros.sort_by do |d|
-        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
-        [version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
+        -(d.total_downloads || 0)
       end
     end
 
@@ -28,11 +27,10 @@ class DistrosController < ApplicationController
     # Group discontinued distros separately
     @discontinued_groups = discontinued_distros.group_by(&:grouping_key).compact
 
-    # Sort discontinued groups
+    # Sort discontinued groups by total_downloads (descending)
     @discontinued_groups.each do |key, group_distros|
       @discontinued_groups[key] = group_distros.sort_by do |d|
-        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
-        [version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
+        -(d.total_downloads || 0)
       end
     end
 

@@ -1,44 +1,56 @@
 <div class="card mb-3">
   <div class="card-body">
-    <h5 class="card-title">
-      <%= Distro.group_display_name(grouping_key, distros) %>
-      <% if distros.first.id_field.present? %>
-        <small class='text-muted'>
-          (<%= distros.first.id_field %>)
-        </small>
-      <% end %>
-    </h5>
-
-    <% if distros.first.home_url.present? %>
-      <p class="card-text">
-        <%= link_to distros.first.home_url, distros.first.home_url, target: '_blank', rel: 'noopener noreferrer' %>
-      </p>
-    <% end %>
-
-    <% stats = Distro.group_stats(distros) %>
-
-    <% if stats[:is_single_rolling] %>
-      <% if stats[:total_images] > 0 %>
-        <p class="card-text">
-          <strong><%= number_with_delimiter(stats[:total_images]) %></strong>
-          <span class='text-muted'><%= 'Docker image'.pluralize(stats[:total_images]) %></span>
-          <% if stats[:total_downloads] > 0 %>
-            - <span class='text-muted'><%= number_with_delimiter(stats[:total_downloads]) %> downloads</span>
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h5 class="card-title mb-1">
+          <%= Distro.group_display_name(grouping_key, distros) %>
+          <% if distros.first.id_field.present? %>
+            <small class='text-muted'>
+              (<%= distros.first.id_field %>)
+            </small>
           <% end %>
-        </p>
-      <% end %>
-    <% else %>
-      <p class="card-text">
-        <strong>Versions:</strong>
-        <span class='text-muted'><%= pluralize distros.count, 'version' %></span>
+        </h5>
+
+        <% if distros.first.home_url.present? %>
+          <div class="small">
+            <%= link_to distros.first.home_url, distros.first.home_url, target: '_blank', rel: 'noopener noreferrer' %>
+          </div>
+        <% end %>
+      </div>
+
+      <% stats = Distro.group_stats(distros) %>
+
+      <% if stats[:is_single_rolling] %>
         <% if stats[:total_images] > 0 %>
-          - <span class='text-muted'><%= pluralize number_with_delimiter(stats[:total_images]), 'Docker image' %></span>
+          <div class="text-end text-muted small">
+            <div>
+              <%= number_with_delimiter(stats[:total_images]) %> <%= 'Docker image'.pluralize(stats[:total_images]) %>
+            </div>
+            <% if stats[:total_downloads] > 0 %>
+              <div>
+                <%= number_with_delimiter(stats[:total_downloads]) %> downloads
+              </div>
+            <% end %>
+          </div>
         <% end %>
-        <% if stats[:total_downloads] > 0 %>
-          - <span class='text-muted'><%= number_with_delimiter(stats[:total_downloads]) %> downloads</span>
-        <% end %>
-      </p>
-    <% end %>
+      <% else %>
+        <div class="text-end text-muted small">
+          <div>
+            <%= distros.count %> <%= 'version'.pluralize(distros.count) %>
+          </div>
+          <% if stats[:total_images] > 0 %>
+            <div>
+              <%= number_with_delimiter(stats[:total_images]) %> <%= 'Docker image'.pluralize(stats[:total_images]) %>
+            </div>
+          <% end %>
+          <% if stats[:total_downloads] > 0 %>
+            <div>
+              <%= number_with_delimiter(stats[:total_downloads]) %> downloads
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
 
     <%
       visible_limit = 10
@@ -47,26 +59,55 @@
       group_id = "distro-group-#{grouping_key.parameterize}"
     %>
 
-    <ul class="list-unstyled mb-0 small">
-      <% visible_distros.each do |distro| %>
-        <li class="mb-1">
-          <%= link_to distro.version_display_text, distro_path(distro.slug) %>
-        </li>
-      <% end %>
-
-      <% if hidden_distros.any? %>
-        <div id="<%= group_id %>-hidden" class="collapse">
-          <% hidden_distros.each do |distro| %>
-            <li class="mb-1">
-              <%= link_to distro.version_display_text, distro_path(distro.slug) %>
-            </li>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th class="text-end">Docker Images</th>
+            <th class="text-end">Downloads</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% visible_distros.each_with_index do |distro, index| %>
+            <% is_last_visible = (index == visible_distros.length - 1) && hidden_distros.empty? %>
+            <tr>
+              <td <%= 'style="border-bottom: none;"'.html_safe if is_last_visible %>>
+                <%= link_to distro.version_display_text, distro_path(distro.slug) %>
+              </td>
+              <td class="text-end text-muted" <%= 'style="border-bottom: none;"'.html_safe if is_last_visible %>>
+                <%= distro.versions_count > 0 ? number_with_delimiter(distro.versions_count) : '-' %>
+              </td>
+              <td class="text-end text-muted" <%= 'style="border-bottom: none;"'.html_safe if is_last_visible %>>
+                <%= distro.total_downloads.to_i > 0 ? number_with_delimiter(distro.total_downloads) : '-' %>
+              </td>
+            </tr>
           <% end %>
-        </div>
-      <% end %>
-    </ul>
+
+          <% if hidden_distros.any? %>
+            <tbody id="<%= group_id %>-hidden" class="collapse">
+              <% hidden_distros.each_with_index do |distro, index| %>
+                <% is_last = (index == hidden_distros.length - 1) %>
+                <tr>
+                  <td <%= 'style="border-bottom: none;"'.html_safe if is_last %>>
+                    <%= link_to distro.version_display_text, distro_path(distro.slug) %>
+                  </td>
+                  <td class="text-end text-muted" <%= 'style="border-bottom: none;"'.html_safe if is_last %>>
+                    <%= distro.versions_count > 0 ? number_with_delimiter(distro.versions_count) : '-' %>
+                  </td>
+                  <td class="text-end text-muted" <%= 'style="border-bottom: none;"'.html_safe if is_last %>>
+                    <%= distro.total_downloads.to_i > 0 ? number_with_delimiter(distro.total_downloads) : '-' %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
     <% if hidden_distros.any? %>
-      <button class="btn btn-sm btn-link ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#<%= group_id %>-hidden" aria-expanded="false">
+      <button class="btn btn-sm btn-link ps-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#<%= group_id %>-hidden" aria-expanded="false">
         Show <%= hidden_distros.count %> more...
       </button>
     <% end %>
