@@ -898,4 +898,29 @@ class DistroTest < ActiveSupport::TestCase
     missing_names = missing.map(&:first)
     refute_includes missing_names, 'Debian GNU/Linux trixie/sid'
   end
+
+  test "missing_from_versions filters out alpha beta rc versions" do
+    package = Package.create!(name: 'test/alpine')
+
+    sbom_data = {
+      'distro' => {
+        'id' => 'alpine',
+        'versionID' => '3.17_alpha20221110',
+        'prettyName' => 'Alpine Linux v3.17_alpha20221110'
+      }
+    }
+
+    version = Version.create!(
+      package: package,
+      number: '1.0',
+      distro_name: 'Alpine Linux v3.17_alpha20221110'
+    )
+    version.create_sbom_record!(data: sbom_data)
+
+    missing = Distro.missing_from_versions
+
+    # Should not include alpha/beta/rc versions
+    missing_names = missing.map(&:first)
+    refute_includes missing_names, 'Alpine Linux v3.17_alpha20221110'
+  end
 end

@@ -226,6 +226,9 @@ class Distro < ApplicationRecord
              # Skip non-distros like busybox
              next true if skip_ids.include?(id_field)
 
+             # Skip alpha/beta/rc versions
+             next true if version_id.to_s.match?(/alpha|beta|rc\d+/i)
+
              # Check if we have a distro with this ID + VERSION_ID
              if variant_id.present?
                exists?(id_field: id_field, version_id: version_id, variant_id: variant_id)
