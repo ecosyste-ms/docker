@@ -820,4 +820,37 @@ class DistroTest < ActiveSupport::TestCase
     assert_not_nil debian_unstable
     assert_equal 'debian', debian_unstable.grouping_key
   end
+
+  test "missing_from_versions does not show versions that match by id and version_id" do
+    distro = Distro.create!(
+      slug: 'ubuntu-22-04',
+      pretty_name: 'Ubuntu 22.04 LTS',
+      name: 'Ubuntu',
+      id_field: 'ubuntu',
+      version_id: '22.04'
+    )
+
+    package = Package.create!(name: 'test/ubuntu')
+
+    sbom_data = {
+      'distro' => {
+        'id' => 'ubuntu',
+        'versionID' => '22.04',
+        'prettyName' => 'Ubuntu 22.04.1 LTS'
+      }
+    }
+
+    version = Version.create!(
+      package: package,
+      number: '1.0',
+      distro_name: 'Ubuntu 22.04.1 LTS'
+    )
+    version.create_sbom_record!(data: sbom_data)
+
+    missing = Distro.missing_from_versions
+
+    # Ubuntu 22.04.1 LTS should NOT be in missing because it matches ubuntu-22-04 by ID + VERSION_ID
+    missing_names = missing.map(&:first)
+    refute_includes missing_names, 'Ubuntu 22.04.1 LTS'
+  end
 end

@@ -197,11 +197,35 @@ class Distro < ApplicationRecord
   end
 
   def self.missing_from_versions
-    # Find distro_names in Version table that don't exist in Distro table
+    # Find distro_names in Version table that don't have a matching Distro
+    # Check both exact pretty_name match and ID + VERSION_ID match
     Version.where.not(distro_name: [nil, ''])
            .group(:distro_name)
            .count
-           .reject { |pretty_name, _count| exists?(pretty_name: pretty_name) }
+           .reject do |distro_name, _count|
+             # Try exact match first
+             next true if exists?(pretty_name: distro_name)
+
+             # Try ID + VERSION_ID match using a sample version
+             version = Version.joins(:sbom_record).find_by(distro_name: distro_name)
+             next false unless version&.sbom_data
+
+             distro_data = version.sbom_data['distro']
+             next false unless distro_data
+
+             id_field = distro_data['id']
+             version_id = distro_data['versionID']
+             variant_id = distro_data['variantID']
+
+             next false unless id_field && version_id
+
+             # Check if we have a distro with this ID + VERSION_ID
+             if variant_id.present?
+               exists?(id_field: id_field, version_id: version_id, variant_id: variant_id)
+             else
+               exists?(id_field: id_field, version_id: version_id, variant_id: nil)
+             end
+           end
            .sort_by { |_name, count| -count }
   end
 
