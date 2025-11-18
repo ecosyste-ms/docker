@@ -130,7 +130,13 @@ namespace :distros do
           puts "="*80
           puts ""
 
-          existing_distros.sort.each do |base_name, variants|
+          # Sort distros by total image count (descending)
+          sorted_existing = existing_distros.sort_by do |base_name, variants|
+            total_count = variants.values.flat_map(&:values).sum { |e| e[:count] }
+            -total_count
+          end
+
+          sorted_existing.each do |base_name, variants|
             puts "#{base_name}:"
 
             # Check if we have actual variants or just the "(no variant)" group
@@ -145,16 +151,17 @@ namespace :distros do
                   puts "  variant: #{variant_id}"
                 end
 
-                entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                # Sort entries by count (descending)
+                entries_hash.values.sort_by { |e| -e[:count] }.each do |entry|
                   version_display = entry[:version_id] || "(no version)"
                   puts "    - version: #{version_display} (#{entry[:count]} images)"
                   puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
                 end
               end
             else
-              # No variants, just list versions directly
+              # No variants, just list versions directly, sorted by count (descending)
               entries = variants.values.flat_map(&:values)
-              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+              entries.sort_by { |e| -e[:count] }.each do |entry|
                 version_display = entry[:version_id] || "(no version)"
                 puts "  - version: #{version_display} (#{entry[:count]} images)"
                 puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
@@ -171,7 +178,13 @@ namespace :distros do
           puts "="*80
           puts ""
 
-          new_distros.sort.each do |base_name, variants|
+          # Sort distros by total image count (descending)
+          sorted_new = new_distros.sort_by do |base_name, variants|
+            total_count = variants.values.flat_map(&:values).sum { |e| e[:count] }
+            -total_count
+          end
+
+          sorted_new.each do |base_name, variants|
             puts "#{base_name}:"
 
             # Check if we have actual variants or just the "(no variant)" group
@@ -186,16 +199,17 @@ namespace :distros do
                   puts "  variant: #{variant_id}"
                 end
 
-                entries_hash.values.sort_by { |e| e[:version_id].to_s }.each do |entry|
+                # Sort entries by count (descending)
+                entries_hash.values.sort_by { |e| -e[:count] }.each do |entry|
                   version_display = entry[:version_id] || "(no version)"
                   puts "    - version: #{version_display} (#{entry[:count]} images)"
                   puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
                 end
               end
             else
-              # No variants, just list versions directly
+              # No variants, just list versions directly, sorted by count (descending)
               entries = variants.values.flat_map(&:values)
-              entries.sort_by { |e| e[:version_id].to_s }.each do |entry|
+              entries.sort_by { |e| -e[:count] }.each do |entry|
                 version_display = entry[:version_id] || "(no version)"
                 puts "  - version: #{version_display} (#{entry[:count]} images)"
                 puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
