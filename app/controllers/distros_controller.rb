@@ -14,10 +14,17 @@ class DistrosController < ApplicationController
     # Group active distros by grouping_key
     @distro_groups = active_distros.group_by(&:grouping_key).compact
 
-    # Sort each group's distros by total_downloads (descending)
+    # Deduplicate distros with same pretty_name, keeping the one with highest version_id
+    # Then sort by total_downloads (descending), then by version_id (descending)
     @distro_groups.each do |key, group_distros|
-      @distro_groups[key] = group_distros.sort_by do |d|
-        -(d.total_downloads || 0)
+      # Group by pretty_name and keep only the highest version_id for each
+      deduped = group_distros.group_by(&:pretty_name).map do |_pretty_name, distros|
+        distros.max_by { |d| d.version_id.to_s.split('.').map(&:to_i) }
+      end
+
+      @distro_groups[key] = deduped.sort_by do |d|
+        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
+        [-(d.total_downloads || 0), version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
       end
     end
 
@@ -27,10 +34,17 @@ class DistrosController < ApplicationController
     # Group discontinued distros separately
     @discontinued_groups = discontinued_distros.group_by(&:grouping_key).compact
 
-    # Sort discontinued groups by total_downloads (descending)
+    # Deduplicate distros with same pretty_name, keeping the one with highest version_id
+    # Then sort by total_downloads (descending), then by version_id (descending)
     @discontinued_groups.each do |key, group_distros|
-      @discontinued_groups[key] = group_distros.sort_by do |d|
-        -(d.total_downloads || 0)
+      # Group by pretty_name and keep only the highest version_id for each
+      deduped = group_distros.group_by(&:pretty_name).map do |_pretty_name, distros|
+        distros.max_by { |d| d.version_id.to_s.split('.').map(&:to_i) }
+      end
+
+      @discontinued_groups[key] = deduped.sort_by do |d|
+        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
+        [-(d.total_downloads || 0), version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
       end
     end
 
