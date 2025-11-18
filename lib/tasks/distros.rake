@@ -4,46 +4,6 @@ namespace :distros do
     Distro.sync_from_github
   end
 
-  desc "Clean up duplicate distros, keeping the newest records with path-based slugs"
-  task cleanup_duplicates: :environment do
-    puts "Finding duplicate distros based on id_field + version_id + variant_id..."
-
-    # Group by unique combination of id_field, version_id, variant_id
-    duplicates = Distro.all.group_by { |d| [d.id_field, d.version_id, d.variant_id] }
-                       .select { |_key, distros| distros.count > 1 }
-
-    if duplicates.empty?
-      puts "No duplicates found!"
-      exit 0
-    end
-
-    puts "Found #{duplicates.count} sets of duplicates"
-    puts ""
-
-    total_deleted = 0
-
-    duplicates.each do |key, distros|
-      id_field, version_id, variant_id = key
-      puts "Processing: id=#{id_field}, version=#{version_id}, variant=#{variant_id}"
-      puts "  Found #{distros.count} duplicates:"
-
-      # Sort by id (newest first) and keep the first one
-      sorted = distros.sort_by(&:id).reverse
-      keep = sorted.first
-      delete = sorted[1..-1]
-
-      puts "    KEEP: ##{keep.id} slug=#{keep.slug} name=#{keep.name}"
-      delete.each do |d|
-        puts "    DELETE: ##{d.id} slug=#{d.slug} name=#{d.name}"
-        d.destroy
-        total_deleted += 1
-      end
-      puts ""
-    end
-
-    puts "Cleanup complete! Deleted #{total_deleted} duplicate distros."
-  end
-
   desc "Update versions_count and total_downloads for all distros"
   task update_counts: :environment do
     puts "Updating versions counts for all distros..."
