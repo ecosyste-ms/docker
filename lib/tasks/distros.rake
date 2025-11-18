@@ -105,16 +105,24 @@ namespace :distros do
       existing_distros = {}
       new_distros = {}
 
-      # Get list of existing distro base names from the database
-      existing_distro_names = Distro.distinct.pluck(:name).compact.map(&:downcase)
+      # Get existing distros as a set of [id_field, version_id] pairs
+      existing_distro_keys = Distro.pluck(:id_field, :version_id)
+        .map { |id, ver| [id&.downcase, ver&.downcase].compact }
+        .to_set
 
       files_map.values.each do |entry|
         base_name = entry[:base_name]
         variant_id = entry[:variant_id]
         variant_key = variant_id || "(no variant)"
 
-        # Check if we have this distro already (by name match)
-        target = existing_distro_names.include?(base_name.downcase) ? existing_distros : new_distros
+        # Extract the id_field from the filename (first part before /)
+        id_from_filename = entry[:filename].split('/').first
+
+        # Check if we have ANY version of this distro (by id_field match)
+        # We consider it "existing" if we have any distro with the same ID, regardless of version
+        has_distro = existing_distro_keys.any? { |pair| pair.first == id_from_filename }
+
+        target = has_distro ? existing_distros : new_distros
 
         target[base_name] ||= {}
         target[base_name][variant_key] ||= {}
