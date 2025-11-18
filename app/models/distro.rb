@@ -249,8 +249,24 @@ class Distro < ApplicationRecord
     # Skip if no pretty_name (required field)
     return unless attributes[:pretty_name].present?
 
-    # Generate slug
-    slug = attributes[:pretty_name].to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+    # Generate slug from file path structure instead of pretty_name
+    # Path structure: .../os-release/ubuntu/22.04 or .../os-release/ubuntu_kylin/22.04
+    # Extract the distro directory name and version from the path
+    path_parts = file_path.split(File::SEPARATOR)
+
+    # Find the index of 'os-release' directory
+    os_release_idx = path_parts.rindex('os-release')
+
+    if os_release_idx && os_release_idx < path_parts.length - 1
+      # Get path parts after 'os-release' directory
+      relative_parts = path_parts[(os_release_idx + 1)..-1]
+
+      # Build slug from directory structure: distro/variant/version or distro/version
+      slug = relative_parts.join('-').downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+    else
+      # Fallback to pretty_name if we can't parse the path
+      slug = attributes[:pretty_name].to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+    end
 
     # Find or create by slug
     distro = find_or_initialize_by(slug: slug)
