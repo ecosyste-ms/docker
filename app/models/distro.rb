@@ -11,27 +11,24 @@ class Distro < ApplicationRecord
   end
 
   def grouping_key
-    # Use id_field if present and the name matches it reasonably well
-    # Otherwise use the name to avoid grouping derivative distros with their base
-    return nil if id_field.blank? && name.blank?
+    # Use the slug's first component (distro family from directory structure)
+    # This correctly groups distros based on the os-release repo structure
+    # e.g., bodhi-20-04 → bodhi, ubuntu-22-04 → ubuntu, ubuntu-kylin-22-04 → ubuntu-kylin
+    return nil if slug.blank?
 
-    if id_field.present? && name.present?
-      # Check if name contains or closely matches the id_field
-      normalized_name = name.downcase.gsub(/[^a-z0-9]/, '')
-      normalized_id = id_field.downcase.gsub(/[^a-z0-9]/, '')
+    # Extract first component from slug (everything before first version-like pattern)
+    # Handle patterns like: ubuntu-22-04, fedora-container-39, ubuntu-kylin-22-04
+    parts = slug.split('-')
 
-      # If the name contains the id or they're very similar, group by id_field
-      if normalized_name.include?(normalized_id) || normalized_id.include?(normalized_name)
-        id_field.downcase
-      else
-        # Name is different - this is likely a derivative distro
-        # Group by the normalized name instead
-        name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
-      end
-    elsif id_field.present?
-      id_field.downcase
+    # Find where the version starts (first numeric part)
+    version_idx = parts.index { |p| p.match?(/^\d/) }
+
+    if version_idx && version_idx > 0
+      # Take everything before the version
+      parts[0...version_idx].join('-')
     else
-      name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+      # No version found, use whole slug
+      slug
     end
   end
 
