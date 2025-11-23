@@ -38,58 +38,71 @@ namespace :distros do
       files_map = {}
 
       missing.each do |distro_name, count|
-        # Find a version with SBOM data for this distro
-        version = Version.joins(:sbom_record).where(distro_name: distro_name).first
-        next unless version&.sbom_data
+        # Find up to 3 versions with SBOM data for this distro from the same package
+        versions = Version.joins(:sbom_record).where(distro_name: distro_name).limit(3).to_a
+        next if versions.empty?
 
-        distro_data = version.sbom_data['distro']
-        next unless distro_data
+        # Group versions by package to try to get different versions from the same package
+        versions_by_package = versions.group_by { |v| v.package_id }
 
-        # Extract fields from distro data
-        pretty_name = distro_data['prettyName']
-        name = distro_data['name']
-        id_field = distro_data['id']
-        version_id = distro_data['versionID']
-        variant_id = distro_data['variantID']
+        # Prefer the package with the most versions available
+        best_package_versions = versions_by_package.values.max_by(&:size) || versions
 
-        # Skip if name contains escape sequences or looks malformed
-        next if name&.include?('\n') || pretty_name&.include?('\n')
-        next if name&.include?('"') || pretty_name&.include?('"')
-
-        # Group by NAME (the base distro name, not PRETTY_NAME which includes version)
-        base_name = name || pretty_name
-        next unless base_name
-        next if base_name.length > 100  # Skip suspiciously long names
-
-        # Generate suggested filename with version
-        # Replace non-alphabetic characters with underscore
-        base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
-
-        # Limit base_filename length
-        base_filename = base_filename[0..50] if base_filename.length > 50
-
-        version_part = (version_id || 'unknown').to_s.gsub(/[^a-z0-9.]+/, '_').gsub(/^_|_$/, '')
-        version_part = version_part[0..30] if version_part.length > 30
-
-        # Build filename: base/version or base/variant/version
-        if variant_id.present?
-          # Has variant: fedora/aurora/40
-          variant_part = variant_id.to_s.downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
-          variant_part = variant_part[0..30] if variant_part.length > 30
-          filename = "#{base_filename}/#{variant_part}/#{version_part}"
-        else
-          # No variant: alpine/3.19.0
-          filename = "#{base_filename}/#{version_part}"
+        # If we only got 1 version from best package, supplement with other packages' versions
+        if best_package_versions.size < 3
+          other_versions = versions - best_package_versions
+          best_package_versions += other_versions.take(3 - best_package_versions.size)
         end
 
-        # Get the Docker image reference
-        image_name = "#{version.package.name}:#{version.number}"
+        # Process each version to get SBOM data
+        version_entries = []
+        best_package_versions.each do |version|
+          next unless version&.sbom_data
 
-        # Use filename as the unique key - only store first occurrence
-        if files_map[filename]
-          files_map[filename][:count] += count
-        else
-          files_map[filename] = {
+          distro_data = version.sbom_data['distro']
+          next unless distro_data
+
+          # Extract fields from distro data
+          pretty_name = distro_data['prettyName']
+          name = distro_data['name']
+          id_field = distro_data['id']
+          version_id = distro_data['versionID']
+          variant_id = distro_data['variantID']
+
+          # Skip if name contains escape sequences or looks malformed
+          next if name&.include?('\n') || pretty_name&.include?('\n')
+          next if name&.include?('"') || pretty_name&.include?('"')
+
+          # Group by NAME (the base distro name, not PRETTY_NAME which includes version)
+          base_name = name || pretty_name
+          next unless base_name
+          next if base_name.length > 100  # Skip suspiciously long names
+
+          # Generate suggested filename with version
+          # Replace non-alphabetic characters with underscore
+          base_filename = (id_field || name || distro_name).downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
+
+          # Limit base_filename length
+          base_filename = base_filename[0..50] if base_filename.length > 50
+
+          version_part = (version_id || 'unknown').to_s.gsub(/[^a-z0-9.]+/, '_').gsub(/^_|_$/, '')
+          version_part = version_part[0..30] if version_part.length > 30
+
+          # Build filename: base/version or base/variant/version
+          if variant_id.present?
+            # Has variant: fedora/aurora/40
+            variant_part = variant_id.to_s.downcase.gsub(/[^a-z]+/, '_').gsub(/^_|_$/, '')
+            variant_part = variant_part[0..30] if variant_part.length > 30
+            filename = "#{base_filename}/#{variant_part}/#{version_part}"
+          else
+            # No variant: alpine/3.19.0
+            filename = "#{base_filename}/#{version_part}"
+          end
+
+          # Get the Docker image reference
+          image_name = "#{version.package.name}:#{version.number}"
+
+          version_entries << {
             base_name: base_name,
             version_id: version_id,
             variant_id: variant_id,
@@ -97,6 +110,21 @@ namespace :distros do
             image: image_name,
             filename: filename
           }
+        end
+
+        # Add all version entries to files_map
+        version_entries.each do |entry|
+          filename = entry[:filename]
+
+          # Use filename as the unique key - store all image alternatives
+          if files_map[filename]
+            files_map[filename][:count] += entry[:count]
+            # Store additional images as alternatives
+            files_map[filename][:images] ||= [files_map[filename][:image]]
+            files_map[filename][:images] << entry[:image] unless files_map[filename][:images].include?(entry[:image])
+          else
+            files_map[filename] = entry.merge(images: [entry[:image]])
+          end
         end
       end
 
@@ -163,7 +191,11 @@ namespace :distros do
                 entries_hash.values.sort_by { |e| -e[:count] }.each do |entry|
                   version_display = entry[:version_id] || "(no version)"
                   puts "    - version: #{version_display} (#{entry[:count]} images)"
-                  puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                  # Display all image alternatives (up to 3)
+                  images = entry[:images] || [entry[:image]]
+                  images.each do |image|
+                    puts "      docker run --rm #{image} cat /etc/os-release > #{entry[:filename]}"
+                  end
                 end
               end
             else
@@ -172,7 +204,11 @@ namespace :distros do
               entries.sort_by { |e| -e[:count] }.each do |entry|
                 version_display = entry[:version_id] || "(no version)"
                 puts "  - version: #{version_display} (#{entry[:count]} images)"
-                puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                # Display all image alternatives (up to 3)
+                images = entry[:images] || [entry[:image]]
+                images.each do |image|
+                  puts "    docker run --rm #{image} cat /etc/os-release > #{entry[:filename]}"
+                end
               end
             end
 
@@ -211,7 +247,11 @@ namespace :distros do
                 entries_hash.values.sort_by { |e| -e[:count] }.each do |entry|
                   version_display = entry[:version_id] || "(no version)"
                   puts "    - version: #{version_display} (#{entry[:count]} images)"
-                  puts "      docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                  # Display all image alternatives (up to 3)
+                  images = entry[:images] || [entry[:image]]
+                  images.each do |image|
+                    puts "      docker run --rm #{image} cat /etc/os-release > #{entry[:filename]}"
+                  end
                 end
               end
             else
@@ -220,7 +260,11 @@ namespace :distros do
               entries.sort_by { |e| -e[:count] }.each do |entry|
                 version_display = entry[:version_id] || "(no version)"
                 puts "  - version: #{version_display} (#{entry[:count]} images)"
-                puts "    docker run --rm #{entry[:image]} cat /etc/os-release > #{entry[:filename]}"
+                # Display all image alternatives (up to 3)
+                images = entry[:images] || [entry[:image]]
+                images.each do |image|
+                  puts "    docker run --rm #{image} cat /etc/os-release > #{entry[:filename]}"
+                end
               end
             end
 
