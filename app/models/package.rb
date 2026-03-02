@@ -1,4 +1,15 @@
 class Package < ApplicationRecord
+  def self.sortable_columns
+    {
+      'last_synced_at' => 'last_synced_at',
+      'downloads' => 'downloads',
+      'name' => 'name',
+      'created_at' => 'created_at',
+      'updated_at' => 'updated_at',
+      'versions_count' => 'versions_count',
+      'dependencies_count' => 'dependencies_count',
+    }
+  end
 
   validates :name, presence: true, uniqueness: true
 
