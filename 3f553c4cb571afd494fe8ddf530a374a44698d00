@@ -1,0 +1,23 @@
+test/models/distro_test.rb
+  1f6998decf356ac6 649-741
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "3f553c4cb571afd494fe8ddf530a374a44698d00",
+  "prompts": {
+    "1f6998decf356ac6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5a457b8a-5d43-446a-a90c-fd6c95217c18",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Andrew Nesbitt",
+      "messages": [],
+      "total_additions": 93,
+      "total_deletions": 0,
+      "accepted_lines": 93,
+      "overriden_lines": 0
+    }
+  }
+}
