@@ -1,0 +1,29 @@
+Gemfile
+  1f6998decf356ac6 18
+app/controllers/distros_controller.rb
+  1f6998decf356ac6 10-12
+config/puma.rb
+  1f6998decf356ac6 13-14,17-30
+app/models/distro.rb
+  1f6998decf356ac6 54-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "c4d9a52827069edd177ee870274a73111b34ac4c",
+  "prompts": {
+    "1f6998decf356ac6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5a457b8a-5d43-446a-a90c-fd6c95217c18",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Andrew Nesbitt",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 75,
+      "accepted_lines": 54,
+      "overriden_lines": 0
+    }
+  }
+}
