@@ -1,0 +1,27 @@
+app/controllers/distros_controller.rb
+  302dbb2d60493e24 12-15
+config/puma.rb
+  302dbb2d60493e24 13
+test/models/distro_test.rb
+  302dbb2d60493e24 721-725
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6e7fe666198164d3dc6fbcf30edbb6d8edf2975c",
+  "prompts": {
+    "302dbb2d60493e24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a63ceefb-ace1-4270-b5d4-0df8ae42f6a9",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Andrew Nesbitt",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 4,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
