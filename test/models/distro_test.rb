@@ -718,7 +718,11 @@ class DistroTest < ActiveSupport::TestCase
 
   test "grouped_and_deduped excludes distros with nil grouping_key" do
     Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10)
-    Distro.create!(pretty_name: "Mystery Distro", versions_count: 5)
+    # Insert a distro with blank slug/id_field/name directly to bypass validations,
+    # since generate_slug would otherwise give it a slug from pretty_name
+    mystery = Distro.new(pretty_name: "Mystery Distro", versions_count: 5, slug: "mystery")
+    mystery.save!(validate: false)
+    mystery.update_columns(slug: nil, name: nil, id_field: nil)
 
     groups = Distro.grouped_and_deduped(Distro.all)
 
