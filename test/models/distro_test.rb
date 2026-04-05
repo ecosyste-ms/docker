@@ -646,6 +646,103 @@ class DistroTest < ActiveSupport::TestCase
     assert_nil Distro.guess_docker_image_from_name("Custom Unknown Distro 1.0")
   end
 
+  # compare_version_ids tests
+  test "compare_version_ids returns positive when a is greater" do
+    assert_operator Distro.compare_version_ids("22.04", "20.04"), :>, 0
+  end
+
+  test "compare_version_ids returns negative when a is less" do
+    assert_operator Distro.compare_version_ids("3.17", "3.18"), :<, 0
+  end
+
+  test "compare_version_ids returns zero for equal versions" do
+    assert_equal 0, Distro.compare_version_ids("12", "12")
+  end
+
+  test "compare_version_ids handles nil values" do
+    assert_operator Distro.compare_version_ids("1.0", nil), :>, 0
+    assert_operator Distro.compare_version_ids(nil, "1.0"), :<, 0
+    assert_equal 0, Distro.compare_version_ids(nil, nil)
+  end
+
+  test "compare_version_ids handles multi-segment versions" do
+    assert_operator Distro.compare_version_ids("22.04.1", "22.04"), :>, 0
+  end
+
+  # grouped_and_deduped tests
+  test "grouped_and_deduped groups distros by grouping_key" do
+    ubuntu1 = Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04 LTS", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10)
+    ubuntu2 = Distro.create!(slug: "ubuntu-20-04", pretty_name: "Ubuntu 20.04 LTS", name: "Ubuntu", id_field: "ubuntu", version_id: "20.04", versions_count: 5)
+    debian = Distro.create!(slug: "debian-12", pretty_name: "Debian GNU/Linux 12", name: "Debian", id_field: "debian", version_id: "12", versions_count: 8)
+
+    groups = Distro.grouped_and_deduped(Distro.all)
+
+    assert_includes groups.keys, "ubuntu"
+    assert_includes groups.keys, "debian"
+    assert_equal 2, groups["ubuntu"].length
+    assert_equal 1, groups["debian"].length
+  end
+
+  test "grouped_and_deduped deduplicates by pretty_name keeping highest version" do
+    Distro.create!(slug: "ubuntu-20-04", pretty_name: "Ubuntu LTS", name: "Ubuntu", id_field: "ubuntu", version_id: "20.04", versions_count: 5)
+    Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu LTS", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10)
+
+    groups = Distro.grouped_and_deduped(Distro.all)
+
+    assert_equal 1, groups["ubuntu"].length
+    assert_equal "22.04", groups["ubuntu"].first.version_id
+  end
+
+  test "grouped_and_deduped sorts groups by total versions_count descending" do
+    Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 50)
+    Distro.create!(slug: "debian-12", pretty_name: "Debian 12", name: "Debian", id_field: "debian", version_id: "12", versions_count: 100)
+    Distro.create!(slug: "alpine-3-17", pretty_name: "Alpine 3.17", name: "Alpine", id_field: "alpine", version_id: "3.17", versions_count: 10)
+
+    groups = Distro.grouped_and_deduped(Distro.all)
+    keys = groups.keys
+
+    assert_equal "debian", keys[0]
+    assert_equal "ubuntu", keys[1]
+    assert_equal "alpine", keys[2]
+  end
+
+  test "grouped_and_deduped sorts distros within group by total_downloads descending" do
+    Distro.create!(slug: "ubuntu-20-04", pretty_name: "Ubuntu 20.04", name: "Ubuntu", id_field: "ubuntu", version_id: "20.04", versions_count: 5, total_downloads: 1000)
+    Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10, total_downloads: 5000)
+
+    groups = Distro.grouped_and_deduped(Distro.all)
+
+    assert_equal "22.04", groups["ubuntu"][0].version_id
+    assert_equal "20.04", groups["ubuntu"][1].version_id
+  end
+
+  test "grouped_and_deduped excludes distros with nil grouping_key" do
+    Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10)
+    # Insert a distro with blank slug/id_field/name directly to bypass validations,
+    # since generate_slug would otherwise give it a slug from pretty_name
+    mystery = Distro.new(pretty_name: "Mystery Distro", versions_count: 5, slug: "mystery")
+    mystery.save!(validate: false)
+    mystery.update_columns(slug: nil, name: nil, id_field: nil)
+
+    groups = Distro.grouped_and_deduped(Distro.all)
+
+    all_distros = groups.values.flatten
+    refute all_distros.any? { |d| d.pretty_name == "Mystery Distro" }
+  end
+
+  test "grouped_and_deduped respects scope filtering" do
+    Distro.create!(slug: "ubuntu-22-04", pretty_name: "Ubuntu 22.04", name: "Ubuntu", id_field: "ubuntu", version_id: "22.04", versions_count: 10, discontinued: false)
+    Distro.create!(slug: "centos-8", pretty_name: "CentOS 8", name: "CentOS", id_field: "centos", version_id: "8", versions_count: 5, discontinued: true)
+
+    active_groups = Distro.grouped_and_deduped(Distro.where(discontinued: false))
+    discontinued_groups = Distro.grouped_and_deduped(Distro.where(discontinued: true))
+
+    assert_includes active_groups.keys, "ubuntu"
+    refute_includes active_groups.keys, "centos"
+    assert_includes discontinued_groups.keys, "centos"
+    refute_includes discontinued_groups.keys, "ubuntu"
+  end
+
   # Grouping tests
   test "grouping_key extracts base name from slug" do
     distro = Distro.new(slug: "ubuntu-22-04")

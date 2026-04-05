@@ -51,6 +51,40 @@ class Distro < ApplicationRecord
     end
   end
 
+  def self.grouped_and_deduped(scope)
+    groups = {}
+
+    scope.select(:id, :slug, :pretty_name, :name, :id_field, :version_id, :version_codename,
+                 :variant, :variant_id, :build_id, :versions_count, :total_downloads, :id_like,
+                 :home_url, :discontinued)
+         .find_each do |distro|
+      key = distro.grouping_key
+      next if key.nil?
+
+      groups[key] ||= {}
+      existing = groups[key][distro.pretty_name]
+
+      if existing.nil? || compare_version_ids(distro.version_id, existing.version_id) > 0
+        groups[key][distro.pretty_name] = distro
+      end
+    end
+
+    groups.transform_values! do |by_name|
+      by_name.values.sort_by do |d|
+        version_numeric = d.version_id.to_s.gsub(/[^\d.]/, '').to_f
+        [-(d.total_downloads || 0), version_numeric != 0 ? 0 : 1, -version_numeric, d.pretty_name]
+      end
+    end
+
+    groups.sort_by { |_key, distros| -distros.sum(&:versions_count) }.to_h
+  end
+
+  def self.compare_version_ids(a, b)
+    a_parts = a.to_s.split('.').map(&:to_i)
+    b_parts = b.to_s.split('.').map(&:to_i)
+    a_parts <=> b_parts
+  end
+
   def self.group_display_name(grouping_key, distros)
     # Get a nice display name for a group based on grouping_key
     # Use the grouping_key titleized, which comes from the directory structure
