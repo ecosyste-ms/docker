@@ -17,6 +17,33 @@ class PackagesControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
     end
     
+
+    should "provide RSS and Atom auto discovery links" do
+      get packages_path
+
+      assert_response :success
+      assert_select 'link[rel="alternate"][type="application/rss+xml"][href=?]', packages_url(format: :rss)
+      assert_select 'link[rel="alternate"][type="application/atom+xml"][href=?]', packages_url(format: :atom)
+    end
+
+    should "render RSS feed" do
+      get packages_path(format: :rss)
+
+      assert_response :success
+      assert_equal 'application/rss+xml', response.media_type
+      assert_includes response.body, '<rss'
+      assert_includes response.body, @package.name
+    end
+
+    should "render Atom feed" do
+      get packages_path(format: :atom)
+
+      assert_response :success
+      assert_equal 'application/atom+xml', response.media_type
+      assert_includes response.body, '<feed'
+      assert_includes response.body, @package.name
+    end
+
     should "show packages with SBOM by default" do
       get packages_path
       
