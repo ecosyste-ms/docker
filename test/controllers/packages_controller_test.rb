@@ -64,6 +64,12 @@ class PackagesControllerTest < ActionDispatch::IntegrationTest
       assert_response :success
       # Should use pagination
     end
+
+    should "handle page overflow without error" do
+      get packages_path(page: 9999)
+
+      assert_response :success
+    end
   end
 
   context "GET #show" do
