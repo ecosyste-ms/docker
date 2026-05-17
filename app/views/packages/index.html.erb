@@ -1,3 +1,8 @@
+<% content_for :head do %>
+  <%= auto_discovery_link_tag(:rss, packages_url(format: :rss), title: "Docker Images RSS") %>
+  <%= auto_discovery_link_tag(:atom, packages_url(format: :atom), title: "Docker Images Atom") %>
+<% end %>
+
 <% @meta_title = "Docker Container Analysis" %>
 <% @meta_description = "Discover dependencies, packages, and Linux distributions extracted from hundreds of thousands of public Docker images. Track usage patterns across ecosystems and explore the open source software powering containerized applications." %>
 

@@ -29,6 +29,12 @@ class PackagesController < ApplicationController
     end
 
     fresh_when(@packages, public: true)
+
+    respond_to do |format|
+      format.html
+      format.rss
+      format.atom
+    end
   end
 
   def show
