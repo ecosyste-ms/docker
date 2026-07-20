@@ -1,0 +1,66 @@
+name: Update Syft
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0" # Runs weekly
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-syft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Check for new Syft version
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest=$(gh api repos/anchore/syft/releases/latest --jq .tag_name)
+          current=$(grep -oP 'SYFT_VERSION=\K.*' Dockerfile)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$latest" != "$current" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open pull request
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          CURRENT: ${{ steps.check.outputs.current }}
+        run: |
+          branch="update-syft-${LATEST}"
+
+          sed -i "s/^ENV SYFT_VERSION=.*/ENV SYFT_VERSION=${LATEST}/" Dockerfile
+
+          if git diff --quiet Dockerfile; then
+            echo "No changes to Dockerfile, skipping"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add Dockerfile
+          git commit -m "Bump syft from ${CURRENT} to ${LATEST}"
+          git push --force origin "$branch"
+
+          if [ -z "$(gh pr list --head "$branch" --base main --state open --json number --jq '.[].number')" ]; then
+            gh pr create \
+              --title "Bump syft from ${CURRENT} to ${LATEST}" \
+              --body "Updates [syft](https://github.com/anchore/syft) from ${CURRENT} to ${LATEST}.
+
+          Release notes: https://github.com/anchore/syft/releases/tag/${LATEST}" \
+              --base main \
+              --head "$branch"
+          else
+            echo "PR already open for $branch"
+          fi
