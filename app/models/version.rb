@@ -11,6 +11,10 @@ class Version < ApplicationRecord
   has_many :dependencies, dependent: :delete_all
   has_one :sbom_record, class_name: 'Sbom', dependent: :destroy
 
+  scope :created_after, ->(time) { where('created_at >= ?', time) }
+  scope :updated_after, ->(time) { where('updated_at >= ?', time) }
+  scope :published_after, ->(time) { where('published_at >= ?', time) }
+
   def to_s
     number
   end

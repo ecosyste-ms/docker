@@ -2,6 +2,9 @@ class PackageUsage < ApplicationRecord
   validates :ecosystem, presence: true
   validates :name, presence: true
 
+  scope :created_after, ->(time) { where('created_at >= ?', time) }
+  scope :updated_after, ->(time) { where('updated_at >= ?', time) }
+
   def to_s
     name
   end

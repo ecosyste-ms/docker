@@ -83,8 +83,6 @@ class Api::V1::VersionsControllerTest < ActionDispatch::IntegrationTest
       end
     end
     
-    # Filtering tests removed - Version model doesn't have these scopes
-    
     should "include dependencies in response" do
       dependency = Dependency.create!(
         version: @version1,

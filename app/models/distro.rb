@@ -6,6 +6,9 @@ class Distro < ApplicationRecord
 
   before_validation :generate_slug, if: -> { pretty_name.present? && slug.blank? }
 
+  scope :created_after, ->(time) { where('created_at >= ?', time) }
+  scope :updated_after, ->(time) { where('updated_at >= ?', time) }
+
   def generate_slug
     self.slug = pretty_name.to_s.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
   end
