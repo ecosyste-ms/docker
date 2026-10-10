@@ -1,11 +1,11 @@
 openapi: 3.0.1
 info:
-  title: "Ecosyste.ms: Docker"
-  description: "An open API service providing dependency metadata for docker images."
+  title: 'Ecosyste.ms: Docker'
+  description: An open API service providing dependency metadata for Docker images.
   contact:
     name: Ecosyste.ms
     email: support@ecosyste.ms
-    url: https://ecosyste.ms 
+    url: https://ecosyste.ms
   version: 1.0.0
   license:
     name: CC-BY-SA-4.0
@@ -16,370 +16,417 @@ externalDocs:
 servers:
 - url: https://docker.ecosyste.ms/api/v1
 paths:
-  /packages:
+  "/packages":
     get:
-      summary: get a list of packages
+      summary: Get a list of packages
       operationId: getPackages
       tags:
-        - packages
+      - packages
       parameters:
-        - name: page
-          in: query
-          description: pagination page number 
-          required: false
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          description: Number of records to return 
-          required: false
-          schema:
-            type: integer
-        - name: created_after
-          in: query
-          description: filter by created_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: updated_after
-          in: query
-          description: filter by updated_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: sort
-          in: query
-          description: field to order results by
-          required: false
-          schema:
-            type: string
-        - name: order
-          in: query
-          description: direction to order results by
-          required: false
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/UpdatedAfter"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/Order"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
+      - name: query
+        in: query
+        description: Case-insensitive substring search of the image name and description.
+        required: false
+        schema:
+          type: string
+          example: redis
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Package'
-  /packages/{packageName}:
+                  "$ref": "#/components/schemas/Package"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+      description: With sort or order supplied, omitted values default to updated_at and desc. Without either parameter, no ordering is specified.
+  "/packages/{packageName}":
     get:
-      summary: get a package by name
+      summary: Get a package by name
       operationId: getPackage
       tags:
-        - packages
+      - packages
       parameters:
-        - in: path
-          name: packageName
-          schema:
-            type: string
-          required: true
-          description: name of package
+      - "$ref": "#/components/parameters/PackageName"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Package'
-  /packages/{packageName}/versions:
+                "$ref": "#/components/schemas/Package"
+          headers:
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+  "/packages/{packageName}/versions":
     get:
-      summary: get a list of versions for a package
+      summary: Get a list of versions for a package
       operationId: getPackageVersions
       tags:
-        - packages
+      - packages
       parameters:
-        - in: path
-          name: packageName
-          schema:
-            type: string
-          required: true
-          description: name of package
-        - name: page
-          in: query
-          description: pagination page number 
-          required: false
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          description: Number of records to return 
-          required: false
-          schema:
-            type: integer
-        - name: created_after
-          in: query
-          description: filter by created_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: updated_after
-          in: query
-          description: filter by updated_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: published_after
-          in: query
-          description: filter by published_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: sort
-          in: query
-          description: field to order results by
-          required: false
-          schema:
-            type: string
-        - name: order
-          in: query
-          description: direction to order results by
-          required: false
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/PackageName"
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/UpdatedAfter"
+      - "$ref": "#/components/parameters/PublishedAfter"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/Order"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Version'
-  /packages/{packageName}/versions/{versionNumber}:
+                  "$ref": "#/components/schemas/Version"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+      description: Defaults to sort=published_at,created_at and order=desc,desc. If an exact package name is not found, a lowercase name is tried.
+  "/packages/{packageName}/versions/{versionNumber}":
     get:
-      summary: get a version of a package
+      summary: Get a version of a package
       operationId: getPackageVersion
       tags:
-        - packages
+      - packages
       parameters:
-        - in: path
-          name: packageName
-          schema:
-            type: string
-          required: true
-          description: name of package
-        - in: path
-          name: versionNumber
-          schema:
-            type: string
-          required: true
-          description: number of version
+      - "$ref": "#/components/parameters/PackageName"
+      - "$ref": "#/components/parameters/VersionNumber"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Version'
-  /usage:
+                "$ref": "#/components/schemas/Version"
+          headers:
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+      description: If an exact package name is not found, a lowercase name is tried.
+  "/usage":
     get:
-      summary: "Get package usage ecosystems"
-      operationId: "usage"
+      summary: Get package usage ecosystems
+      operationId: usage
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Ecosystem'
-  /usage/{ecosystem}:
-    get:
-      summary: "Get package usage for an ecosystem"
-      operationId: "usageEcosystem"
+                  "$ref": "#/components/schemas/Ecosystem"
+          headers:
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Cache-Control:
+              description: Allows public caching for one day.
+              schema:
+                type: string
+              example: max-age=86400, public
+        '304':
+          "$ref": "#/components/responses/NotModified"
+      tags:
+      - usage
+      description: Returns all ecosystems without pagination. Invalid sort values fall back to packages_count; invalid order values fall back to desc. Responses are cached for one day.
       parameters:
-        - name: ecosystem
-          in: path
-          description: "The ecosystem to get usage for"
-          required: true
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - name: sort
+        in: query
+        description: Field to sort ecosystems by.
+        required: false
+        schema:
+          type: string
+          enum:
+          - name
+          - packages_count
+          - total_downloads
+          default: packages_count
+      - name: order
+        in: query
+        description: Sort direction.
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+  "/usage/{ecosystem}":
+    get:
+      summary: Get package usage for an ecosystem
+      operationId: usageEcosystem
+      parameters:
+      - "$ref": "#/components/parameters/Ecosystem"
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/UpdatedAfter"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/Order"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PackageUsage'
-  /usage/{ecosystem}/{package}:
+                  "$ref": "#/components/schemas/PackageUsage"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          description: No package usages match this ecosystem, filter, or page.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+              example:
+                error: not found
+      tags:
+      - usage
+      description: With sort or order supplied, omitted values default to updated_at and desc. Without either parameter, no ordering is specified. Returns 404 when the requested page has no matching records, including after filtering.
+  "/usage/{ecosystem}/{package}":
     get:
-      summary: "Get package usage for a package"
-      operationId: "usagePackage"
+      summary: Get package usage for a package
+      operationId: usagePackage
       parameters:
-        - name: ecosystem
-          in: path
-          description: "The ecosystem to get usage for"
-          required: true
-          schema:
-            type: string
-        - name: package
-          in: path
-          description: "The package to get usage for"
-          required: true
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/Ecosystem"
+      - "$ref": "#/components/parameters/UsagePackage"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PackageUsage'
-  /distros:
+                "$ref": "#/components/schemas/PackageUsageDetail"
+          headers:
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+      tags:
+      - usage
+  "/distros":
     get:
-      summary: get a list of Linux distributions
+      summary: Get a list of Linux distributions
       operationId: getDistros
       tags:
-        - distros
+      - distros
       parameters:
-        - name: page
-          in: query
-          description: pagination page number
-          required: false
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          description: Number of records to return
-          required: false
-          schema:
-            type: integer
-        - name: created_after
-          in: query
-          description: filter by created_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: updated_after
-          in: query
-          description: filter by updated_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: sort
-          in: query
-          description: field to order results by
-          required: false
-          schema:
-            type: string
-        - name: order
-          in: query
-          description: direction to order results by
-          required: false
-          schema:
-            type: string
-        - name: query
-          in: query
-          description: search query for distro name or id
-          required: false
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/UpdatedAfter"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/Order"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
+      - name: query
+        in: query
+        description: Case-insensitive substring search of pretty_name, name, and id_field.
+        required: false
+        schema:
+          type: string
+          example: alpine
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Distro'
-  /distros/{slug}:
+                  "$ref": "#/components/schemas/Distro"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+      description: With sort or order supplied, omitted values default to pretty_name and asc. Without either parameter, no ordering is specified.
+  "/distros/{slug}":
     get:
-      summary: get a Linux distribution by slug
+      summary: Get a Linux distribution by slug
       operationId: getDistro
       tags:
-        - distros
+      - distros
       parameters:
-        - in: path
-          name: slug
-          schema:
-            type: string
-          required: true
-          description: slug of distribution
+      - "$ref": "#/components/parameters/Slug"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Distro'
-  /distros/{slug}/versions:
+                "$ref": "#/components/schemas/Distro"
+          headers:
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+  "/distros/{slug}/versions":
     get:
-      summary: get a list of versions for a Linux distribution
+      summary: Get a list of versions for a Linux distribution
       operationId: getDistroVersions
       tags:
-        - distros
+      - distros
       parameters:
-        - in: path
-          name: slug
-          schema:
-            type: string
-          required: true
-          description: slug of distribution
-        - name: page
-          in: query
-          description: pagination page number
-          required: false
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          description: Number of records to return
-          required: false
-          schema:
-            type: integer
-        - name: created_after
-          in: query
-          description: filter by created_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: updated_after
-          in: query
-          description: filter by updated_at after given time
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: sort
-          in: query
-          description: field to order results by
-          required: false
-          schema:
-            type: string
-        - name: order
-          in: query
-          description: direction to order results by
-          required: false
-          schema:
-            type: string
+      - "$ref": "#/components/parameters/Slug"
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/CreatedAfter"
+      - "$ref": "#/components/parameters/UpdatedAfter"
+      - "$ref": "#/components/parameters/Sort"
+      - "$ref": "#/components/parameters/Order"
+      - "$ref": "#/components/parameters/IfNoneMatch"
+      - "$ref": "#/components/parameters/IfModifiedSince"
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Version'
+                  "$ref": "#/components/schemas/Version"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+            Last-Modified:
+              "$ref": "#/components/headers/LastModified"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+      description: Defaults to sort=published_at and order=desc.
+  "/usage/{ecosystem}/{package}/dependencies":
+    get:
+      summary: Get Docker image dependencies matching a package
+      description: Returns dependency records across image versions, with their Docker package metadata. The same image can appear more than once.
+      operationId: usagePackageDependencies
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/UsageDependency"
+          headers:
+            Link:
+              "$ref": "#/components/headers/Link"
+            Current-Page:
+              "$ref": "#/components/headers/CurrentPage"
+            Page-Items:
+              "$ref": "#/components/headers/PageItems"
+            ETag:
+              "$ref": "#/components/headers/ETag"
+        '304':
+          "$ref": "#/components/responses/NotModified"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+      tags:
+      - usage
+      parameters:
+      - "$ref": "#/components/parameters/Ecosystem"
+      - "$ref": "#/components/parameters/UsagePackage"
+      - "$ref": "#/components/parameters/Page"
+      - "$ref": "#/components/parameters/PerPage"
+      - "$ref": "#/components/parameters/IfNoneMatch"
 components:
   schemas:
     Package:
@@ -387,18 +434,25 @@ components:
       properties:
         name:
           type: string
+          example: redis
         description:
           type: string
+          nullable: true
         versions_count:
           type: integer
+          nullable: true
         latest_release_published_at:
           type: string
           format: date-time
+          nullable: true
         latest_release_number:
           type: string
+          nullable: true
         last_synced_at:
           type: string
           format: date-time
+          nullable: true
+          example:
         created_at:
           type: string
           format: date-time
@@ -407,40 +461,96 @@ components:
           format: date-time
         downloads:
           type: integer
+          nullable: true
+          format: int64
         versions_url:
           type: string
+          format: uri
+        has_sbom:
+          type: boolean
+          nullable: true
+        dependencies_count:
+          type: integer
+          nullable: true
+        repository_url:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+      required:
+      - name
+      - description
+      - versions_count
+      - latest_release_published_at
+      - latest_release_number
+      - last_synced_at
+      - created_at
+      - updated_at
+      - downloads
+      - versions_url
+      - has_sbom
+      - dependencies_count
+      - repository_url
+      - url
     Version:
       type: object
       properties:
-          number:
-            type: string
-          published_at:
-            type: string
-          created_at:
-            type: string
-            format: date-time
-          updated_at:
-            type: string
-            format: date-time
-          purl:
-            type: string
-          distro:
-            type: string
-          version_url:
-            type: string
-          package:
-            type: object
-            properties:
-              name:
-                type: string
-              package_url:
-                type: string
-          dependencies:
-            type: array
-            items:
-              $ref: '#/components/schemas/Dependency'
+        number:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        distro:
+          type: string
+          nullable: true
+          example: Alpine Linux
+        version_url:
+          type: string
+          format: uri
+        package:
+          type: object
+          properties:
+            name:
+              type: string
+            package_url:
+              type: string
+              format: uri
+          required:
+          - name
+          - package_url
+        dependencies:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Dependency"
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - number
+      - published_at
+      - created_at
+      - updated_at
+      - distro
+      - version_url
+      - package
+      - dependencies
+      - last_synced_at
     Dependency:
       type: object
+      example:
+        ecosystem: npm
+        package_name: example-package
+        requirements: '1.0.0'
+        purl: pkg:npm/example-package@1.0.0
       properties:
         ecosystem:
           type: string
@@ -448,6 +558,15 @@ components:
           type: string
         requirements:
           type: string
+          description: Dependency version reported by the image SBOM.
+        purl:
+          type: string
+          description: Package URL identifying the dependency.
+      required:
+      - ecosystem
+      - package_name
+      - requirements
+      - purl
     Ecosystem:
       type: object
       properties:
@@ -455,25 +574,45 @@ components:
           type: string
         packages_count:
           type: integer
+          nullable: true
         total_downloads:
           type: integer
+          nullable: true
+          format: int64
         ecosystem_url:
           type: string
+          format: uri
+      required:
+      - name
+      - packages_count
+      - total_downloads
+      - ecosystem_url
     PackageUsage:
       type: object
       properties:
         ecosystem:
           type: string
+          example: npm
         name:
           type: string
+          example: "@babel/core"
         dependents_count:
           type: integer
-        requirements:
-          type: object
+          nullable: true
+          format: int64
         package_usage_url:
           type: string
-        dependencies_url:
-          type: string
+          format: uri
+        downloads_count:
+          type: integer
+          format: int64
+          nullable: true
+      required:
+      - ecosystem
+      - name
+      - dependents_count
+      - package_usage_url
+      - downloads_count
     Distro:
       type: object
       properties:
@@ -483,44 +622,60 @@ components:
           type: string
         name:
           type: string
+          nullable: true
         id_field:
           type: string
+          nullable: true
         id_like:
           type: string
+          nullable: true
         version_id:
           type: string
+          nullable: true
         version_codename:
           type: string
+          nullable: true
         variant:
           type: string
+          nullable: true
         variant_id:
           type: string
+          nullable: true
         slug:
           type: string
         versions_count:
           type: integer
-        total_downloads:
-          type: integer
+          nullable: true
         home_url:
           type: string
+          nullable: true
         support_url:
           type: string
+          nullable: true
         bug_report_url:
           type: string
+          nullable: true
         documentation_url:
           type: string
+          nullable: true
         logo:
           type: string
+          nullable: true
         ansi_color:
           type: string
+          nullable: true
         cpe_name:
           type: string
+          nullable: true
         build_id:
           type: string
+          nullable: true
         image_id:
           type: string
+          nullable: true
         image_version:
           type: string
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -529,5 +684,237 @@ components:
           format: date-time
         url:
           type: string
+          format: uri
         html_url:
           type: string
+          format: uri
+      required:
+      - id
+      - pretty_name
+      - name
+      - id_field
+      - id_like
+      - version_id
+      - version_codename
+      - variant
+      - variant_id
+      - slug
+      - versions_count
+      - home_url
+      - support_url
+      - bug_report_url
+      - documentation_url
+      - logo
+      - ansi_color
+      - cpe_name
+      - build_id
+      - image_id
+      - image_version
+      - created_at
+      - updated_at
+      - url
+      - html_url
+    PackageUsageDetail:
+      type: object
+      properties:
+        ecosystem:
+          type: string
+        name:
+          type: string
+        dependents_count:
+          type: integer
+          nullable: true
+          format: int64
+        downloads_count:
+          type: integer
+          format: int64
+          nullable: true
+        dependencies_url:
+          type: string
+          format: uri
+      required:
+      - ecosystem
+      - name
+      - dependents_count
+      - downloads_count
+      - dependencies_url
+    UsageDependency:
+      type: object
+      properties:
+        ecosystem:
+          type: string
+        package_name:
+          type: string
+        requirements:
+          type: string
+        purl:
+          type: string
+          description: Package URL identifying the dependency.
+        id:
+          type: integer
+        package:
+          "$ref": "#/components/schemas/Package"
+      required:
+      - ecosystem
+      - package_name
+      - requirements
+      - purl
+      - id
+      - package
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Page number, starting at 1.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      description: Records per page. Values above 1000 are capped at 1000.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+    CreatedAfter:
+      name: created_after
+      in: query
+      description: Return records created at or after this timestamp.
+      required: false
+      schema:
+        type: string
+        format: date-time
+    UpdatedAfter:
+      name: updated_after
+      in: query
+      description: Return records updated at or after this timestamp.
+      required: false
+      schema:
+        type: string
+        format: date-time
+    PublishedAfter:
+      name: published_after
+      in: query
+      description: Return versions published at or after this timestamp. Versions without a publication timestamp are excluded.
+      required: false
+      schema:
+        type: string
+        format: date-time
+    Sort:
+      name: sort
+      in: query
+      description: Database field names, separated by commas for multiple sort fields. See the operation description for defaults.
+      required: false
+      schema:
+        type: string
+        example: created_at,updated_at
+    Order:
+      name: order
+      in: query
+      description: 'Sort directions: asc or desc. For multiple sort fields, supply one comma-separated direction per field.'
+      required: false
+      schema:
+        type: string
+        example: desc,asc
+    PackageName:
+      name: packageName
+      in: path
+      description: Docker image name. Percent-encode slashes in names such as library/redis.
+      required: true
+      schema:
+        type: string
+        example: redis
+    VersionNumber:
+      name: versionNumber
+      in: path
+      description: Image tag.
+      required: true
+      schema:
+        type: string
+    Ecosystem:
+      name: ecosystem
+      in: path
+      description: Package ecosystem name. Matching is case-sensitive.
+      required: true
+      schema:
+        type: string
+        example: npm
+    UsagePackage:
+      name: package
+      in: path
+      description: Dependency package name. Percent-encode slashes in scoped names.
+      required: true
+      schema:
+        type: string
+        example: "@babel/core"
+    Slug:
+      name: slug
+      in: path
+      description: Distribution slug returned by the distros endpoint.
+      required: true
+      schema:
+        type: string
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      description: ETag from an earlier response. A matching resource returns 304 with no body.
+      required: false
+      schema:
+        type: string
+    IfModifiedSince:
+      name: If-Modified-Since
+      in: header
+      description: Last-Modified value from an earlier response, formatted as an HTTP date.
+      required: false
+      schema:
+        type: string
+  headers:
+    Link:
+      description: Pagination links with first, prev, and next relations when available. Follow next until it is absent. Total counts and last-page links are not provided.
+      schema:
+        type: string
+    CurrentPage:
+      description: Current page number.
+      schema:
+        type: integer
+        minimum: 1
+    PageItems:
+      description: Configured page size; the returned array may contain fewer records.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+    ETag:
+      description: Resource validator for If-None-Match requests.
+      schema:
+        type: string
+    LastModified:
+      description: Resource modification time as an HTTP date.
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/Error"
+          example:
+            error: not found
+    NotModified:
+      description: The resource has not changed. The response has no body.
+      headers:
+        ETag:
+          "$ref": "#/components/headers/ETag"
