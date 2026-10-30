@@ -3,19 +3,26 @@ name: Update Syft
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * 0" # Runs weekly
+    - cron: "0 3 * * 0"
 
-permissions:
-  contents: write
-  pull-requests: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
 
 jobs:
   update-syft:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
+          persist-credentials: false
 
       - name: Check for new Syft version
         id: check
@@ -51,6 +58,7 @@ jobs:
           git checkout -b "$branch"
           git add Dockerfile
           git commit -m "Bump syft from ${CURRENT} to ${LATEST}"
+          gh auth setup-git
           git push --force origin "$branch"
 
           if [ -z "$(gh pr list --head "$branch" --base main --state open --json number --jq '.[].number')" ]; then
