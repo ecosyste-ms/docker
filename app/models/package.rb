@@ -55,20 +55,17 @@ class Package < ApplicationRecord
   end
 
   def self.sync_popular
-    page = (REDIS.get('next_popular_page') || 1).to_i
-    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=downloads&order=desc&limit=100&page=#{page}"
+    cursor = REDIS.get('sync_popular_cursor') || '1970-01-01T00:00:00Z'
+    url = "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=updated_at&order=asc&updated_after=#{CGI.escape(cursor)}&per_page=100"
     response = Faraday.get(url) do |req|
       req.headers['X-API-Key'] = ENV['ECOSYSTEMS_API_KEY'] if ENV['ECOSYSTEMS_API_KEY']
     end
     return unless response.success?
     json = JSON.parse(response.body)
+    return if json.empty?
     json.each do |package|
-      next if package['downloads'].nil?
       next if package['status'].present?
-      if package['downloads'] == 0
-        page = 0
-        break 
-      end
+      next if package['downloads'].to_i.zero?
       p = Package.find_or_create_by(name: package["name"])
       p.update({
         description: package["description"],
@@ -77,7 +74,9 @@ class Package < ApplicationRecord
       })
       p.sync rescue nil
     end
-    REDIS.set('next_popular_page', page + 1)
+    next_cursor = json.last['updated_at']
+    next_cursor = (Time.iso8601(cursor) + 0.001).utc.iso8601(3) if next_cursor == cursor
+    REDIS.set('sync_popular_cursor', next_cursor)
   end
 
   def self.resync_outdated
