@@ -173,4 +173,48 @@ class PackageTest < ActiveSupport::TestCase
     assert_equal 150, package.versions.count
     assert_equal 150, package.reload.versions_count
   end
+
+  test "sync_popular walks by updated_at cursor and advances it" do
+    REDIS.stubs(:get).with('sync_popular_cursor').returns(nil)
+    Package.any_instance.stubs(:sync)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=updated_at&order=asc&updated_after=1970-01-01T00%3A00%3A00Z&per_page=100")
+      .to_return(status: 200, body: [
+        { name: "library/alpine", downloads: 1000, updated_at: "2026-11-01T00:00:00Z" },
+        { name: "library/removed", downloads: 500, status: "removed", updated_at: "2026-11-02T00:00:00Z" },
+        { name: "library/zero", downloads: 0, updated_at: "2026-11-03T00:00:00Z" },
+        { name: "library/busybox", downloads: 2000, updated_at: "2026-11-04T00:00:00Z" },
+      ].to_json)
+
+    REDIS.expects(:set).with('sync_popular_cursor', '2026-11-04T00:00:00Z')
+
+    Package.sync_popular
+
+    assert Package.exists?(name: "library/alpine")
+    assert Package.exists?(name: "library/busybox")
+    refute Package.exists?(name: "library/removed")
+    refute Package.exists?(name: "library/zero")
+  end
+
+  test "sync_popular resumes from stored cursor and does not advance on empty page" do
+    REDIS.stubs(:get).with('sync_popular_cursor').returns('2026-11-04T00:00:00Z')
+    REDIS.expects(:set).never
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=updated_at&order=asc&updated_after=2026-11-04T00%3A00%3A00Z&per_page=100")
+      .to_return(status: 200, body: [].to_json)
+
+    Package.sync_popular
+  end
+
+  test "sync_popular bumps the cursor when the response does not advance it" do
+    REDIS.stubs(:get).with('sync_popular_cursor').returns('2026-11-01T00:07:11.830Z')
+    Package.any_instance.stubs(:sync)
+
+    stub_request(:get, "https://packages.ecosyste.ms/api/v1/registries/hub.docker.com/packages?sort=updated_at&order=asc&updated_after=2026-11-01T00%3A07%3A11.830Z&per_page=100")
+      .to_return(status: 200, body: [{ name: "library/stuck", downloads: 1, updated_at: "2026-11-01T00:07:11.830Z" }].to_json)
+
+    REDIS.expects(:set).with('sync_popular_cursor', '2026-11-01T00:07:11.831Z')
+
+    Package.sync_popular
+  end
 end
